@@ -1,17 +1,18 @@
+#include <algorithm>
 #include <conio.h>
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits> // Necesario para std::numeric_limits
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <map>
-#include <algorithm>
+#include <thread>
+#include <chrono>
 
-#ifndef NOMINMAX // Previene que windows.h defina min/max como macros si ya está
-                 // definido
+#ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <windows.h>
@@ -32,23 +33,32 @@ void modificarTrabajos();
 void agregarTrabajo();
 void agregarTrabajoConFecha();
 void gestionarTrabajos();
-void ordenarAlumnosYArchivos(const std::vector<std::string>& alumnosOrdenados);
+void ordenarAlumnosYArchivos(const std::vector<std::string> &alumnosOrdenados);
 void gestionarCriteriosEvaluacion();
 void agregarCriteriosEvaluacion();
 void modificarCriteriosEvaluacion();
 bool existenCriteriosEvaluacion();
 void mostrarTablaCriterios();
+void modificarCalificacionAlumno();
+void calcularPromedioParcial();
+void calcularPromedioSemestre();
+void gen();
+bool validarEntradaNumerica(const std::string& entrada, float& valor, float min, float max);
+bool validarFormatoFecha(const std::string& fecha);
+bool archivoExiste(const std::string& nombreArchivo);
+bool eliminarArchivo(const std::string& nombreArchivo);
+bool renombrarArchivo(const std::string& viejoNombre, const std::string& nuevoNombre);
 
 // Agregar después de las declaraciones de funciones existentes
-std::string obtenerApellido(const std::string& nombreCompleto) {
-    std::stringstream ss(nombreCompleto);
-    std::string apellido;
-    ss >> apellido; // Obtiene la primera palabra (apellido)
-    return apellido;
+std::string obtenerApellido(const std::string &nombreCompleto) {
+  std::stringstream ss(nombreCompleto);
+  std::string apellido;
+  ss >> apellido; // Obtiene la primera palabra (apellido)
+  return apellido;
 }
 
-bool compararPorApellido(const std::string& a, const std::string& b) {
-    return obtenerApellido(a) < obtenerApellido(b);
+bool compararPorApellido(const std::string &a, const std::string &b) {
+  return obtenerApellido(a) < obtenerApellido(b);
 }
 
 void setUTF8() { system("chcp 65001 > nul"); }
@@ -67,25 +77,37 @@ std::vector<std::string> split(const std::string &linea, char delim) {
 void mostrarMenu() {
   system("cls");
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Color celeste
-  std::cout << "===== SISTEMA DE GESTION ESCOLAR =====\n";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
-  std::cout << "1. Lista de asistencias\n";
-  std::cout << "2. Modificar asistencias\n";
-  std::cout << "3. Lista de trabajos\n";
-  std::cout << "4. Modificar calificaciones\n";
-  // Opción 5 de agregar trabajo con fecha eliminada
+  std::cout << "===== SISTEMA DE GESTION ESCOLAR =====\n\n";
+
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo
+  std::cout << "=== CONSULTAS ===\n";
+  std::cout << "1.  Lista de asistencias\n";
+  std::cout << "2.  Lista de trabajos\n\n";
 
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde
-  std::cout << "5. Agregar alumnos\n";  // Opción 6 anterior
-  std::cout << "6. Agregar trabajos\n"; // Opción 7 anterior
-  std::cout << "7. Gestionar Fechas\n"; // Opción 8 anterior
+  std::cout << "=== REGISTROS ===\n";
+  std::cout << "3.  Registrar asistencias\n";
+  std::cout << "4.  Registrar trabajos\n";
+  std::cout << "5.  Agregar alumnos\n";
+  std::cout << "6.  Agregar trabajos\n\n";
 
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta
-  std::cout << "8. Gestionar Trabajos\n";             // Opción 9 anterior
-  std::cout << "9. Gestionar Criterios de Evaluacion\n"; // Reincorporada
-  std::cout << "0. Salir\n";
+  std::cout << "=== GESTION ===\n";
+  std::cout << "7.  Gestionar Fechas\n";
+  std::cout << "8.  Gestionar Trabajos\n";
+  std::cout << "9.  Gestionar Criterios de Evaluacion\n";
+  std::cout << "10. Modificar Calificacion de Alumno\n";
+  std::cout << "11. Modificar Asistencia de Alumno\n\n";
+
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-                          15); // Volver a blanco
+                          14); // Amarillo - Promedios en consultas
+  std::cout << "=== PROMEDIOS ===\n";
+  std::cout << "12. Calcular Promedio Parcial\n";
+  std::cout << "13. Calcular Promedio Semestre\n\n";
+
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 3); // Cian
+  std::cout << "0.  Salir\n";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
 }
 
 void mostrarCuadriculaAsistencias() {
@@ -94,7 +116,7 @@ void mostrarCuadriculaAsistencias() {
   std::ifstream archivoAsistencias("asistencias.txt");
 
   system("cls");
-  mostrarTextoAnimado("=== CARGANDO LISTA DE ASISTENCIAS ===", 11); // Celeste
+  mostrarTextoAnimado("=== CARGANDO LISTA DE ASISTENCIAS ===", 11);
   esperar(500);
 
   if (!archivoAlumnos.is_open()) {
@@ -137,82 +159,56 @@ void mostrarCuadriculaAsistencias() {
   }
   archivoAsistencias.close();
 
-  const int COLUMNAS_VISIBLES = 5;   // Mostrar hasta 5 fechas a la vez
-  const int ANCHO_NOMBRE = 20;       // Ancho fijo para nombres
-  const int ANCHO_CALIFICACION = 18; // Mismo ancho que en trabajos
-
-  int desplazamiento = 0;
-  bool primeraVez = true;
-
-  do {
-    if (primeraVez) {
-      system("cls");
-      mostrarTextoAnimado("=== LISTA DE ASISTENCIAS ===", 14); // Amarillo
-      esperar(300);
-    } else {
-      system("cls"); // Limpiar rápido
+  // Calcular el ancho máximo del nombre
+  size_t maxAnchoNombre = 0;
+  for (const auto& alumno : alumnos) {
+    if (alumno.length() > maxAnchoNombre) {
+      maxAnchoNombre = alumno.length();
     }
+  }
+  const int ANCHO_NOMBRE = std::max(30, static_cast<int>(maxAnchoNombre) + 2);
+  const int ANCHO_COLUMNA_DATOS = 15;
+
+  // Calcular cuántas columnas caben en la pantalla
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+  int anchoPantalla = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+  int columnasVisibles = (anchoPantalla - ANCHO_NOMBRE - 2) / (ANCHO_COLUMNA_DATOS + 1);
+
+  int inicioColumnas = 0;
+  bool salir = false;
+
+  while (!salir) {
+    system("cls");
+    mostrarTextoAnimado("=== LISTA DE ASISTENCIAS ===", 14);
+    esperar(300);
 
     // Dibujar encabezado de la tabla
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i)
-      std::cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i) std::cout << "-";
     std::cout << "+";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(fechas.size());
-         ++i) {
-      for (int j = 0; j < ANCHO_CALIFICACION; ++j)
-        std::cout << "-";
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(fechas.size()) - inicioColumnas); ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) std::cout << "-";
       std::cout << "+";
     }
     std::cout << "\n";
 
-    // Fila 1: "Nombre"
+    // Fila 1: "Nombre" y Fechas
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "|";
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
     std::cout << std::left << std::setw(ANCHO_NOMBRE) << "Nombre";
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "|";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(fechas.size());
-         ++i) {
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(fechas.size()) - inicioColumnas); ++i) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::string nombre = fechas[i];
-      int padding = ANCHO_CALIFICACION - nombre.length();
+      std::string fecha = fechas[inicioColumnas + i];
+      int padding = ANCHO_COLUMNA_DATOS - fecha.length();
       int pl = padding / 2, pr = padding - pl;
-      for (int k = 0; k < pl; ++k)
-        std::cout << " ";
-      std::cout << nombre;
-      for (int k = 0; k < pr; ++k)
-        std::cout << " ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::cout << "|";
-    }
-    std::cout << "\n";
-
-    // Fila 2: espacio vacío debajo de "Nombre"
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-    std::cout << "|";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i)
-      std::cout << " ";
-    std::cout << "|";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(fechas.size());
-         ++i) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::string vacio = ""; // No hay fecha extra aquí
-      int padding = ANCHO_CALIFICACION - vacio.length();
-      int pl = padding / 2, pr = padding - pl;
-      for (int k = 0; k < pl; ++k)
-        std::cout << " ";
-      std::cout << vacio;
-      for (int k = 0; k < pr; ++k)
-        std::cout << " ";
+      for (int k = 0; k < pl; ++k) std::cout << " ";
+      std::cout << fecha;
+      for (int k = 0; k < pr; ++k) std::cout << " ";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       std::cout << "|";
     }
@@ -221,15 +217,10 @@ void mostrarCuadriculaAsistencias() {
     // Línea divisoria
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i)
-      std::cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i) std::cout << "-";
     std::cout << "+";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(fechas.size());
-         ++i) {
-      for (int j = 0; j < ANCHO_CALIFICACION; ++j)
-        std::cout << "-";
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(fechas.size()) - inicioColumnas); ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) std::cout << "-";
       std::cout << "+";
     }
     std::cout << "\n";
@@ -243,79 +234,59 @@ void mostrarCuadriculaAsistencias() {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       std::cout << "|";
 
-      for (int j = desplazamiento; j < desplazamiento + COLUMNAS_VISIBLES &&
-                                   j < static_cast<int>(fechas.size());
-           ++j) {
-
+      for (int j = 0; j < std::min(columnasVisibles, static_cast<int>(fechas.size()) - inicioColumnas); ++j) {
         std::string valor = " ";
         int colorValor = 15;
 
-        if (i < asistencias.size() &&
-            j < static_cast<int>(asistencias[i].size())) {
-          valor = (asistencias[i][j] == "1") ? "Sí" : "No";
-          colorValor = (asistencias[i][j] == "1") ? 10 : 12;
+        if (i < asistencias.size() && inicioColumnas + j < asistencias[i].size()) {
+          valor = (asistencias[i][inicioColumnas + j] == "1") ? "Sí" : "No";
+          colorValor = (asistencias[i][inicioColumnas + j] == "1") ? 10 : 12;
         }
 
-        int padding = ANCHO_CALIFICACION - valor.length();
+        int padding = ANCHO_COLUMNA_DATOS - valor.length();
         int pl = padding / 2, pr = padding - pl;
 
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        for (int k = 0; k < pl; ++k)
-          std::cout << " ";
+        for (int k = 0; k < pl; ++k) std::cout << " ";
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colorValor);
         std::cout << valor;
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        for (int k = 0; k < pr; ++k)
-          std::cout << " ";
+        for (int k = 0; k < pr; ++k) std::cout << " ";
         std::cout << "|";
       }
 
-      if (primeraVez)
-        esperar(50); // Animación solo en carga inicial
       std::cout << "\n";
     }
 
     // Línea inferior
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i)
-      std::cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i) std::cout << "-";
     std::cout << "+";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(fechas.size());
-         ++i) {
-      for (int j = 0; j < ANCHO_CALIFICACION; ++j)
-        std::cout << "-";
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(fechas.size()) - inicioColumnas); ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) std::cout << "-";
       std::cout << "+";
     }
     std::cout << "\n";
 
-    // Instrucciones
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
-    std::cout << "Usa <- -> para navegar. Presiona ENTER para regresar.\n";
+    // Instrucciones de navegación
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 3);
+    std::cout << "\nFlechas Izq/Der: Navegar | ENTER: Regresar al Menu Principal\n";
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 
-    char key = _getch();
-    switch (key) {
-    case 75: // Flecha izquierda
-      if (desplazamiento > 0) {
-        desplazamiento--;
-        primeraVez = false;
+    // Manejo de teclas
+    int tecla = _getch();
+    if (tecla == 224) { // Tecla de flecha
+      tecla = _getch();
+      if (tecla == 75 && inicioColumnas > 0) { // Flecha izquierda
+        inicioColumnas--;
+      } else if (tecla == 77 && inicioColumnas + columnasVisibles < fechas.size()) { // Flecha derecha
+        inicioColumnas++;
       }
-      break;
-    case 77: // Flecha derecha
-      if (desplazamiento + COLUMNAS_VISIBLES <
-          static_cast<int>(fechas.size())) {
-        desplazamiento++;
-        primeraVez = false;
-      }
-      break;
-    case 13: // Enter
-      return;
+    } else if (tecla == 13) { // ENTER
+      salir = true;
     }
-
-  } while (true);
+  }
 }
 
 void esperar(int milisegundos) { Sleep(milisegundos); }
@@ -341,716 +312,416 @@ void mostrarBarraProgreso(int duracion) {
 }
 
 void modificarAsistencias() {
-  while (true) { // Bucle infinito hasta que se elija salir
     system("cls");
-    mostrarTextoAnimado("=== MODIFICACION DE ASISTENCIAS ===", 14); // Amarillo
+    mostrarTextoAnimado("=== MODIFICAR ASISTENCIAS ===", 14);
     esperar(500);
 
     std::ifstream archivoAlumnos("alumnos.txt");
-    std::ifstream archivoFechas("fechas.txt");
-    std::ifstream archivoAsistencias("asistencias.txt");
-
     if (!archivoAlumnos.is_open()) {
-      mostrarTextoAnimado("Error al abrir el archivo de alumnos.", 12); // Rojo
-      esperar(1000);
-      return;
-    }
-    if (!archivoFechas.is_open()) {
-      mostrarTextoAnimado("Error al abrir el archivo de fechas.", 12); // Rojo
-      esperar(1000);
-      return;
-    }
-    if (!archivoAsistencias.is_open()) {
-      mostrarTextoAnimado("Error al abrir el archivo de asistencias.",
-                          12); // Rojo
-      esperar(1000);
-      return;
+        mostrarTextoAnimado("Error al abrir el archivo de alumnos.", 12);
+        esperar(1000);
+        return;
     }
 
     std::vector<std::string> alumnos;
     std::string linea;
     while (getline(archivoAlumnos, linea)) {
-      alumnos.push_back(linea);
+        alumnos.push_back(linea);
     }
     archivoAlumnos.close();
 
-    std::vector<std::string> fechas;
+    if (alumnos.empty()) {
+        mostrarTextoAnimado("No hay alumnos registrados.", 12);
+        esperar(1000);
+        return;
+    }
+
+    std::ifstream archivoFechas("fechas.txt");
+    if (!archivoFechas.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de fechas.", 12);
+        esperar(1000);
+        return;
+    }
+
     std::string lineaFechas;
+    std::vector<std::string> fechas;
     if (getline(archivoFechas, lineaFechas)) {
-      fechas = split(lineaFechas, ',');
-      if (!fechas.empty() && fechas.back().empty()) {
-        fechas.pop_back();
-      }
+        fechas = split(lineaFechas, ',');
+        if (!fechas.empty() && fechas.back().empty()) {
+            fechas.pop_back();
+        }
     }
     archivoFechas.close();
 
+    if (fechas.empty()) {
+        mostrarTextoAnimado("No hay fechas registradas.", 12);
+        esperar(1000);
+        return;
+    }
+
+    std::cout << "\nSeleccione la fecha:\n\n";
+    for (size_t i = 0; i < fechas.size(); ++i) {
+        std::cout << i + 1 << ". " << fechas[i] << "\n";
+    }
+
+    float seleccionFecha;
+    std::string entrada;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear input buffer before the loop
+    do {
+        std::cout << "\nIngrese el numero de la fecha (o 0 para regresar): ";
+        std::getline(std::cin, entrada);
+        if (!validarEntradaNumerica(entrada, seleccionFecha, 0, fechas.size())) {
+            mostrarTextoAnimado("Seleccion invalida. Intente de nuevo.", 12);
+            continue;
+        }
+        break;
+    } while (true);
+
+    if (seleccionFecha == 0) {
+        mostrarTextoAnimado("Regresando al menu principal...", 13);
+        esperar(500);
+        return;
+    }
+
+    std::ifstream archivoAsistencias("asistencias.txt");
+    if (!archivoAsistencias.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de asistencias.", 12);
+        esperar(1000);
+        return;
+    }
+
     std::vector<std::vector<std::string>> asistencias;
     while (getline(archivoAsistencias, linea)) {
-      auto datos = split(linea, ',');
-      asistencias.push_back(datos);
+        asistencias.push_back(split(linea, ','));
     }
     archivoAsistencias.close();
 
-    // Si no hay fechas o alumnos, no podemos hacer nada
-    if (fechas.empty() || alumnos.empty()) {
-      if (fechas.empty())
-        mostrarTextoAnimado("No hay fechas disponibles para modificar.",
-                            14); // Amarillo
-      if (alumnos.empty())
-        mostrarTextoAnimado("No hay alumnos disponibles para modificar.",
-                            14); // Amarillo
-      esperar(1500);
-      return; // Regresar directamente al menú principal
-    }
-
-    mostrarTextoAnimado("\nSelecciona la fecha a modificar:", 11); // Celeste
-    std::cout << "\n";
-    for (size_t i = 0; i < fechas.size(); ++i) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde
-      std::cout << i + 1 << ". ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
-      std::cout << fechas[i] << "\n";
-      esperar(100);
-    }
-
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-                            13); // Magenta para regresar
-    std::cout << "0. Regresar al Menu Principal\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
-
-    int opcionModificar;
-    std::cout << "\nOpcion: ";
-    std::cin >> opcionModificar;
-
-    // Limpiar buffer después de leer número
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    // Manejar opción 0 primero
-    if (opcionModificar == 0) {
-      mostrarTextoAnimado("Regresando al Menu Principal...", 13); // Magenta
-      esperar(500);
-      return; // Salimos inmediatamente y volvemos al menú principal
-    }
-
-    // Ajustar índice
-    int indiceFecha = opcionModificar - 1;
-
-    // Validar índice
-    if (indiceFecha < 0 || indiceFecha >= static_cast<int>(fechas.size())) {
-      mostrarTextoAnimado("Opcion invalida.", 12); // Rojo
-      esperar(1000);
-      continue; // Reiniciar bucle
-    }
-
-    // Mostrar formulario de edición de asistencias
     system("cls");
-    mostrarTextoAnimado("=== REGISTRO DE ASISTENCIAS ===", 14); // Amarillo
-    mostrarTextoAnimado("Fecha: " + fechas[indiceFecha], 11);   // Celeste
+    mostrarTextoAnimado("=== REGISTRO DE ASISTENCIAS ===", 14);
+    mostrarTextoAnimado("Fecha: " + fechas[static_cast<int>(seleccionFecha) - 1], 11);
 
     for (size_t i = 0; i < alumnos.size(); ++i) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde
-      std::cout << "\n" << alumnos[i] << "\n";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo
-      std::cout << "Asistencia (1 = Sí, 0 = No): ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
+        std::cout << "\n" << alumnos[i] << "\n";
+        std::cout << "Asistencia (1 = Presente, 0 = Ausente): ";
 
-      std::string valor;
-      std::cin >> valor;
-      if (valor != "1" && valor != "0")
-        valor = "0";
+        float asistencia;
+        do {
+            std::getline(std::cin, entrada);
+            if (!validarEntradaNumerica(entrada, asistencia, 0, 1)) {
+                mostrarTextoAnimado("Valor invalido. Debe ser 0 o 1.", 12);
+                std::cout << "Asistencia (1 = Presente, 0 = Ausente): ";
+                continue;
+            }
+            break;
+        } while (true);
 
-      // Actualizar asistencia
-      if (i < asistencias.size() &&
-          indiceFecha < static_cast<int>(asistencias[i].size())) {
-        asistencias[i][indiceFecha] = valor;
-      } else {
-        mostrarTextoAnimado("Error: Datos incompletos para este alumno.",
-                            12); // Rojo
-      }
-    }
-
-    // Guardar cambios
-    mostrarTextoAnimado("\nGuardando cambios...", 11); // Celeste
-    mostrarBarraProgreso(1000);
-
-    std::ofstream archivoOut("asistencias.txt");
-    if (!archivoOut.is_open()) {
-      mostrarTextoAnimado("Error al guardar el archivo de asistencias.",
-                          12); // Rojo
-      esperar(1000);
-    } else {
-      for (const auto &fila : asistencias) {
-        for (size_t j = 0; j < fila.size(); ++j) {
-          archivoOut << fila[j];
-          if (j != fila.size() - 1)
-            archivoOut << ",";
+        if (i < asistencias.size() && static_cast<int>(seleccionFecha) - 1 < asistencias[i].size()) {
+            asistencias[i][static_cast<int>(seleccionFecha) - 1] = std::to_string(static_cast<int>(asistencia));
+        } else {
+            mostrarTextoAnimado("Error: Datos incompletos para este alumno.", 12);
         }
-        archivoOut << "\n";
-      }
-      archivoOut.close();
-      mostrarTextoAnimado("\n¡Asistencias actualizadas correctamente!",
-                          10); // Verde
     }
 
+    std::ofstream archivoAsistenciasOut("asistencias.txt");
+    if (!archivoAsistenciasOut.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de asistencias para escritura.", 12);
+        esperar(1000);
+        return;
+    }
+
+    for (const auto& fila : asistencias) {
+        for (size_t i = 0; i < fila.size(); ++i) {
+            archivoAsistenciasOut << fila[i];
+            if (i < fila.size() - 1) {
+                archivoAsistenciasOut << ",";
+            }
+        }
+        archivoAsistenciasOut << "\n";
+    }
+    archivoAsistenciasOut.close();
+
+    mostrarTextoAnimado("Asistencias actualizadas correctamente.", 10);
     esperar(1000);
-  } // Fin del bucle infinito
 }
 
 void gestionarFechas() {
-  int opcionGestionFechas;
-  do {
     system("cls");
-    mostrarTextoAnimado("=== GESTION DE FECHAS ===",
-                        10); // Verde para el título principal
+    mostrarTextoAnimado("=== GESTIONAR FECHAS ===", 14);
+    esperar(500);
 
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-                            14); // Amarillo para las opciones
-    std::cout << "\nSelecciona una opcion:\n";
-    std::cout << "1. Agregar Fecha\n";
-    std::cout << "2. Eliminar Fecha\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-                            13); // Magenta para regresar
-    std::cout << "0. Regresar al Menu Principal\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
-
-    std::cout << "\nSelecciona una opcion: ";
-    std::cin >> opcionGestionFechas;
-    std::cin.ignore();
-
-    switch (opcionGestionFechas) {
-    case 1: { // Agregar Fecha
-      system("cls");
-      mostrarTextoAnimado("=== AGREGAR FECHA ===",
-                          10); // Verde para el título de esta sección
-      esperar(500);            // Pequeña pausa
-
-      std::string nuevaFecha;
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-                              11); // Celeste para la instrucción
-      std::cout << "\nIntroduce la nueva fecha (ej. DD/MM/AAAA): ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-                              15); // Blanco para la entrada del usuario
-      std::cin >> nuevaFecha;
-
-      if (nuevaFecha.empty()) {
-        mostrarTextoAnimado("Fecha invalida.", 12); // Rojo
+    std::ifstream archivoFechas("fechas.txt");
+    if (!archivoFechas.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de fechas.", 12);
         esperar(1000);
-        break;
-      }
-
-      // Leer fechas actuales
-      mostrarTextoAnimado("Leyendo fechas existentes...", 11); // Celeste
-      esperar(300);
-      std::vector<std::string> fechasActuales;
-      std::ifstream archivoFechasIn("fechas.txt");
-      std::string lineaFechas;
-      if (getline(archivoFechasIn, lineaFechas)) {
-        fechasActuales = split(lineaFechas, ',');
-        if (!fechasActuales.empty() && fechasActuales.back().empty()) {
-          fechasActuales.pop_back();
-        }
-      }
-      archivoFechasIn.close();
-      mostrarTextoAnimado("Fechas existentes leídas.", 10); // Verde
-
-      fechasActuales.push_back(nuevaFecha); // Añadir la nueva fecha al vector
-
-      // Escribir todas las fechas al archivo temporal
-      mostrarTextoAnimado("Guardando nueva fecha...", 11); // Celeste
-      std::ofstream archivoFechasTemp("fechas.temp");
-      if (!archivoFechasTemp.is_open()) {
-        mostrarTextoAnimado("Error al crear archivo temporal para fechas.",
-                            12); // Rojo
-        esperar(1000);
-        break;
-      }
-
-      for (size_t i = 0; i < fechasActuales.size(); ++i) {
-        archivoFechasTemp << fechasActuales[i];
-        if (i < fechasActuales.size() - 1)
-          archivoFechasTemp << ",";
-      }
-      archivoFechasTemp << "\n";
-      archivoFechasTemp.close();
-
-      // Reemplazar el archivo original
-      remove("fechas.txt");
-      rename("fechas.temp", "fechas.txt");
-      mostrarTextoAnimado("Fecha agregada a fechas.txt", 10); // Verde
-
-      // Actualizar asistencias.txt
-      mostrarTextoAnimado("Actualizando archivo de asistencias...",
-                          11); // Celeste
-      mostrarBarraProgreso(
-          1000); // Barra de progreso para la actualización grande
-
-      std::vector<std::string> lineasAsistencia;
-      std::ifstream archivoAsistenciasIn("asistencias.txt");
-      std::string lineaAsistencia;
-      while (getline(archivoAsistenciasIn, lineaAsistencia)) {
-        lineasAsistencia.push_back(lineaAsistencia);
-      }
-      archivoAsistenciasIn.close();
-
-      std::ofstream archivoAsistenciasOut("asistencias.temp");
-      if (!archivoAsistenciasOut.is_open()) {
-        mostrarTextoAnimado("Error al crear archivo temporal para asistencias.",
-                            12); // Rojo
-        esperar(1000);
-        break;
-      }
-
-      for (const auto &l : lineasAsistencia) {
-        if (!l.empty()) {
-          archivoAsistenciasOut << l << ",0\n";
-        } else {
-          archivoAsistenciasOut << "\n";
-        }
-      }
-      archivoAsistenciasOut.close();
-
-      remove("asistencias.txt");
-      rename("asistencias.temp", "asistencias.txt");
-      mostrarTextoAnimado(
-          "Archivo de asistencias actualizado con la nueva columna.",
-          10); // Verde
-
-      esperar(1000);
-      break;
+        return;
     }
-    case 2: { // Eliminar Fecha
-      system("cls");
-      mostrarTextoAnimado("=== ELIMINAR FECHA ===", 12); // Rojo para eliminar
 
-      // Leer fechas actuales
-      std::vector<std::string> fechas;
-      std::ifstream archivoFechasIn("fechas.txt");
-      std::string lineaFechas;
-      if (getline(archivoFechasIn, lineaFechas)) {
-        fechas = split(lineaFechas, ',');
+    std::string linea;
+    std::vector<std::string> fechas;
+    if (getline(archivoFechas, linea)) {
+        fechas = split(linea, ',');
         if (!fechas.empty() && fechas.back().empty()) {
-          fechas.pop_back();
+            fechas.pop_back();
         }
-      }
-      archivoFechasIn.close();
-
-      if (fechas.empty()) {
-        mostrarTextoAnimado("No hay fechas para eliminar.", 14); // Amarillo
-        esperar(1000);
-        break;
-      }
-
-      mostrarTextoAnimado("\nSelecciona el numero de la fecha a eliminar:\n",
-                          11); // Celeste
-      for (size_t i = 0; i < fechas.size(); ++i) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde
-        std::cout << i + 1 << ". ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
-        std::cout << fechas[i] << "\n";
-      }
-
-      int opcionFechaEliminar;
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo
-      std::cout << "\nOpcion: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
-      std::cin >> opcionFechaEliminar;
-      opcionFechaEliminar--; // Ajustar a indice base 0
-
-      if (opcionFechaEliminar < 0 || opcionFechaEliminar >= fechas.size()) {
-        mostrarTextoAnimado("Opcion invalida.", 12); // Rojo
-        esperar(1000);
-        break;
-      }
-
-      // Eliminar la fecha del vector
-      std::string fechaEliminada = fechas[opcionFechaEliminar];
-      fechas.erase(fechas.begin() + opcionFechaEliminar);
-
-      mostrarTextoAnimado("\nEliminando fecha y actualizando archivos...",
-                          11); // Mensaje antes de la carga
-      mostrarBarraProgreso(
-          1500); // Animación de carga (ajusta la duración si es necesario)
-
-      // Escribir fechas sin la fecha eliminada al archivo temporal
-      std::ofstream archivoFechasTemp("fechas.temp");
-      if (!archivoFechasTemp.is_open()) {
-        mostrarTextoAnimado("Error al crear archivo temporal para fechas.",
-                            12); // Rojo
-        esperar(1000);
-        break;
-      }
-      for (size_t i = 0; i < fechas.size(); ++i) {
-        archivoFechasTemp << fechas[i];
-        if (i < fechas.size() - 1)
-          archivoFechasTemp << ",";
-      }
-      archivoFechasTemp << "\n";
-      archivoFechasTemp.close();
-
-      // Reemplazar el archivo original
-      remove("fechas.txt");
-      rename("fechas.temp", "fechas.txt");
-      mostrarTextoAnimado(
-          "Fecha " + fechaEliminada + " eliminada de fechas.txt", 10); // Verde
-
-      // Eliminar la columna correspondiente en asistencias.txt
-      std::vector<std::vector<std::string>> asistencias;
-      std::ifstream archivoAsistenciasIn("asistencias.txt");
-      std::string lineaAsistencia;
-      while (getline(archivoAsistenciasIn, lineaAsistencia)) {
-        std::vector<std::string> datos = split(lineaAsistencia, ',');
-        if (opcionFechaEliminar < datos.size()) {
-          datos.erase(datos.begin() + opcionFechaEliminar);
-        }
-        asistencias.push_back(datos);
-      }
-      archivoAsistenciasIn.close();
-
-      std::ofstream archivoAsistenciasOut("asistencias.temp");
-      if (!archivoAsistenciasOut.is_open()) {
-        mostrarTextoAnimado("Error al crear archivo temporal para asistencias.",
-                            12); // Rojo
-        esperar(1000);
-        break;
-      }
-
-      for (size_t i = 0; i < asistencias.size(); ++i) {
-        for (size_t j = 0; j < asistencias[i].size(); ++j) {
-          archivoAsistenciasOut << asistencias[i][j];
-          if (j < asistencias[i].size() - 1)
-            archivoAsistenciasOut << ",";
-        }
-        archivoAsistenciasOut << "\n";
-      }
-      archivoAsistenciasOut.close();
-
-      remove("asistencias.txt");
-      rename("asistencias.temp", "asistencias.txt");
-
-      mostrarTextoAnimado("Columna de asistencia correspondiente eliminada.",
-                          10); // Verde
-
-      esperar(1000);
-      break;
     }
-    case 0:
-      mostrarTextoAnimado("Regresando al Menu Principal...", 13); // Magenta
-      esperar(500);
-      break;
-    default:
-      mostrarTextoAnimado("Opcion invalida.", 12); // Rojo
-      esperar(1000);
-      break;
+    archivoFechas.close();
+
+    std::cout << "\nFechas actuales:\n\n";
+    for (size_t i = 0; i < fechas.size(); ++i) {
+        std::cout << i + 1 << ". " << fechas[i] << "\n";
     }
-  } while (opcionGestionFechas != 0);
+
+    std::cout << "\n1. Agregar fecha\n";
+    std::cout << "2. Eliminar fecha\n";
+    std::cout << "0. Volver al menu principal\n\n";
+
+    float opcion;
+    std::string entrada;
+    do {
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear input buffer
+        std::cout << "Seleccione una opcion: ";
+        std::getline(std::cin, entrada);
+        if (!validarEntradaNumerica(entrada, opcion, 0, 2)) {
+            mostrarTextoAnimado("Opcion invalida. Intente de nuevo.", 12);
+            continue;
+        }
+        break;
+    } while (true);
+
+    switch (static_cast<int>(opcion)) {
+        case 1: {
+            std::string nuevaFecha;
+            do {
+                std::cout << "\nIngrese la nueva fecha (DD/MM/AAAA): ";
+                std::getline(std::cin, nuevaFecha);
+                if (!validarFormatoFecha(nuevaFecha)) {
+                    mostrarTextoAnimado("Formato de fecha invalido. Use DD/MM/AAAA.", 12);
+                    continue;
+                }
+                break;
+            } while (true);
+
+            fechas.push_back(nuevaFecha);
+            break;
+        }
+        case 2: {
+            if (fechas.empty()) {
+                mostrarTextoAnimado("No hay fechas para eliminar.", 12);
+                esperar(1000);
+                return;
+            }
+
+            float indice;
+            do {
+                std::cout << "\nIngrese el numero de la fecha a eliminar: ";
+                std::getline(std::cin, entrada);
+                if (!validarEntradaNumerica(entrada, indice, 1, fechas.size())) {
+                    mostrarTextoAnimado("Seleccion invalida. Intente de nuevo.", 12);
+                    continue;
+                }
+                break;
+            } while (true);
+
+            fechas.erase(fechas.begin() + static_cast<int>(indice) - 1);
+            break;
+        }
+        case 0:
+            return;
+    }
+
+    std::ofstream archivoFechasOut("fechas.txt");
+    if (!archivoFechasOut.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de fechas para escritura.", 12);
+        esperar(1000);
+        return;
+    }
+
+    for (size_t i = 0; i < fechas.size(); ++i) {
+        archivoFechasOut << fechas[i];
+        if (i < fechas.size() - 1) {
+            archivoFechasOut << ",";
+        }
+    }
+    archivoFechasOut.close();
+
+    mostrarTextoAnimado("Fechas actualizadas correctamente.", 10);
+    esperar(1000);
 }
 
-void ordenarAlumnosYArchivos(const std::vector<std::string>& alumnosOrdenados) {
-    // Leer todos los archivos
-    std::vector<std::vector<std::string>> asistencias;
-    std::vector<std::vector<std::string>> calificaciones;
-    
-    // Leer asistencias
-    std::ifstream archivoAsistenciasIn("asistencias.txt");
-    std::string lineaAsistencia;
-    while (getline(archivoAsistenciasIn, lineaAsistencia)) {
-        asistencias.push_back(split(lineaAsistencia, ','));
-    }
-    archivoAsistenciasIn.close();
+void ordenarAlumnosYArchivos(const std::vector<std::string> &alumnosOrdenados) {
+  // Leer todos los archivos
+  std::vector<std::vector<std::string>> asistencias;
+  std::vector<std::vector<std::string>> calificaciones;
 
-    // Leer calificaciones
-    std::ifstream archivoCalificacionesIn("calificaciones.txt");
-    std::string lineaCalificacion;
-    while (getline(archivoCalificacionesIn, lineaCalificacion)) {
-        calificaciones.push_back(split(lineaCalificacion, ','));
-    }
-    archivoCalificacionesIn.close();
+  // Leer asistencias
+  std::ifstream archivoAsistenciasIn("asistencias.txt");
+  std::string lineaAsistencia;
+  while (getline(archivoAsistenciasIn, lineaAsistencia)) {
+    asistencias.push_back(split(lineaAsistencia, ','));
+  }
+  archivoAsistenciasIn.close();
 
-    // Crear mapas para mantener el orden original
-    std::map<std::string, std::vector<std::string>> mapaAsistencias;
-    std::map<std::string, std::vector<std::string>> mapaCalificaciones;
-    
-    // Leer alumnos actuales
-    std::vector<std::string> alumnosActuales;
-    std::ifstream archivoAlumnosIn("alumnos.txt");
+  // Leer calificaciones
+  std::ifstream archivoCalificacionesIn("calificaciones.txt");
+  std::string lineaCalificacion;
+  while (getline(archivoCalificacionesIn, lineaCalificacion)) {
+    calificaciones.push_back(split(lineaCalificacion, ','));
+  }
+  archivoCalificacionesIn.close();
+
+  // Crear mapas para mantener el orden original
+  std::map<std::string, std::vector<std::string>> mapaAsistencias;
+  std::map<std::string, std::vector<std::string>> mapaCalificaciones;
+
+  // Leer alumnos actuales
+  std::vector<std::string> alumnosActuales;
+  std::ifstream archivoAlumnosIn("alumnos.txt");
+  std::string linea;
+  while (getline(archivoAlumnosIn, linea)) {
+    alumnosActuales.push_back(linea);
+  }
+  archivoAlumnosIn.close();
+
+  // Mapear datos actuales
+  for (size_t i = 0; i < alumnosActuales.size(); ++i) {
+    if (i < asistencias.size()) {
+      mapaAsistencias[alumnosActuales[i]] = asistencias[i];
+    }
+    if (i < calificaciones.size()) {
+      mapaCalificaciones[alumnosActuales[i]] = calificaciones[i];
+    }
+  }
+
+  // Guardar alumnos ordenados
+  std::ofstream archivoAlumnosOut("alumnos.txt");
+  for (const auto &alumno : alumnosOrdenados) {
+    archivoAlumnosOut << alumno << "\n";
+  }
+  archivoAlumnosOut.close();
+
+  // Guardar asistencias ordenadas
+  std::ofstream archivoAsistenciasOut("asistencias.txt");
+  for (const auto &alumno : alumnosOrdenados) {
+    if (mapaAsistencias.count(alumno) > 0) {
+      const auto &asistencia = mapaAsistencias[alumno];
+      for (size_t i = 0; i < asistencia.size(); ++i) {
+        archivoAsistenciasOut << asistencia[i];
+        if (i < asistencia.size() - 1)
+          archivoAsistenciasOut << ",";
+      }
+      archivoAsistenciasOut << "\n";
+    }
+  }
+  archivoAsistenciasOut.close();
+
+  // Guardar calificaciones ordenadas
+  std::ofstream archivoCalificacionesOut("calificaciones.txt");
+  for (const auto &alumno : alumnosOrdenados) {
+    if (mapaCalificaciones.count(alumno) > 0) {
+      const auto &calificacion = mapaCalificaciones[alumno];
+      for (size_t i = 0; i < calificacion.size(); ++i) {
+        archivoCalificacionesOut << calificacion[i];
+        if (i < calificacion.size() - 1)
+          archivoCalificacionesOut << ",";
+      }
+      archivoCalificacionesOut << "\n";
+    }
+  }
+  archivoCalificacionesOut.close();
+}
+
+void agregarAlumno() {
+    system("cls");
+    mostrarTextoAnimado("=== AGREGAR ALUMNO ===", 14);
+    esperar(500);
+
+    std::string nombre;
+    do {
+        std::cout << "\nIngrese el nombre completo del alumno: ";
+        std::getline(std::cin, nombre);
+        if (nombre.empty()) {
+            mostrarTextoAnimado("El nombre no puede estar vacio.", 12);
+            continue;
+        }
+        break;
+    } while (true);
+
+    std::ifstream archivoAlumnos("alumnos.txt");
+    if (!archivoAlumnos.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de alumnos.", 12);
+        esperar(1000);
+        return;
+    }
+
+    std::vector<std::string> alumnos;
     std::string linea;
-    while (getline(archivoAlumnosIn, linea)) {
-        alumnosActuales.push_back(linea);
+    while (getline(archivoAlumnos, linea)) {
+        alumnos.push_back(linea);
     }
-    archivoAlumnosIn.close();
+    archivoAlumnos.close();
 
-    // Mapear datos actuales
-    for (size_t i = 0; i < alumnosActuales.size(); ++i) {
-        if (i < asistencias.size()) {
-            mapaAsistencias[alumnosActuales[i]] = asistencias[i];
-        }
-        if (i < calificaciones.size()) {
-            mapaCalificaciones[alumnosActuales[i]] = calificaciones[i];
+    // Verificar si el alumno ya existe
+    for (const auto& alumno : alumnos) {
+        if (alumno == nombre) {
+            mostrarTextoAnimado("El alumno ya existe en el sistema.", 12);
+            esperar(1000);
+            return;
         }
     }
 
-    // Guardar alumnos ordenados
+    // Agregar el nuevo alumno
+    alumnos.push_back(nombre);
+
+    // Ordenar alumnos por apellido
+    std::sort(alumnos.begin(), alumnos.end(), compararPorApellido);
+
+    // Guardar la lista actualizada
     std::ofstream archivoAlumnosOut("alumnos.txt");
-    for (const auto& alumno : alumnosOrdenados) {
+    if (!archivoAlumnosOut.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de alumnos para escritura.", 12);
+        esperar(1000);
+        return;
+    }
+
+    for (const auto& alumno : alumnos) {
         archivoAlumnosOut << alumno << "\n";
     }
     archivoAlumnosOut.close();
 
-    // Guardar asistencias ordenadas
-    std::ofstream archivoAsistenciasOut("asistencias.txt");
-    for (const auto& alumno : alumnosOrdenados) {
-        if (mapaAsistencias.count(alumno) > 0) {
-            const auto& asistencia = mapaAsistencias[alumno];
-            for (size_t i = 0; i < asistencia.size(); ++i) {
-                archivoAsistenciasOut << asistencia[i];
-                if (i < asistencia.size() - 1) archivoAsistenciasOut << ",";
-            }
-            archivoAsistenciasOut << "\n";
-        }
-    }
-    archivoAsistenciasOut.close();
-
-    // Guardar calificaciones ordenadas
-    std::ofstream archivoCalificacionesOut("calificaciones.txt");
-    for (const auto& alumno : alumnosOrdenados) {
-        if (mapaCalificaciones.count(alumno) > 0) {
-            const auto& calificacion = mapaCalificaciones[alumno];
-            for (size_t i = 0; i < calificacion.size(); ++i) {
-                archivoCalificacionesOut << calificacion[i];
-                if (i < calificacion.size() - 1) archivoCalificacionesOut << ",";
-            }
-            archivoCalificacionesOut << "\n";
-        }
-    }
-    archivoCalificacionesOut.close();
-}
-
-void agregarAlumno() {
-  int opcionGestionAlumnos;
-  do {
-    system("cls");
-    mostrarTextoAnimado("=== GESTION DE ALUMNOS ===", 10);
-    esperar(500);
-
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-    std::cout << "\nSelecciona una opcion:\n";
-    std::cout << "1. Agregar Alumno\n";
-    std::cout << "2. Eliminar Alumno\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
-    std::cout << "0. Regresar al Menu Principal\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-
-    std::cout << "\nSelecciona una opcion: ";
-    std::cin >> opcionGestionAlumnos;
-    std::cin.ignore();
-
-    switch (opcionGestionAlumnos) {
-    case 1: { // Agregar Alumno
-      system("cls");
-      mostrarTextoAnimado("=== AGREGAR ALUMNO ===", 10);
-      esperar(500);
-
-      std::string nuevoNombre;
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::cout << "\nIntroduce el nombre completo del nuevo alumno: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::getline(std::cin, nuevoNombre);
-
-      if (nuevoNombre.empty()) {
-        mostrarTextoAnimado("Nombre invalido.", 12);
+    // Actualizar archivo de asistencias
+    std::ifstream archivoFechas("fechas.txt");
+    if (!archivoFechas.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de fechas.", 12);
         esperar(1000);
-        break;
-      }
+        return;
+    }
 
-      mostrarTextoAnimado("Guardando alumno en alumnos.txt...", 11);
-      std::ofstream archivoAlumnosOut("alumnos.txt", std::ios::app);
-      if (!archivoAlumnosOut.is_open()) {
-        mostrarTextoAnimado("Error al abrir el archivo de alumnos para agregar.", 12);
-        esperar(1000);
-        break;
-      }
-      archivoAlumnosOut << nuevoNombre << "\n";
-      archivoAlumnosOut.close();
-      mostrarTextoAnimado("Alumno agregado a alumnos.txt", 10);
-
-      mostrarTextoAnimado("Actualizando asistencias.txt...", 11);
-
-      std::vector<std::string> fechas;
-      std::ifstream archivoFechasIn("fechas.txt");
-      std::string lineaFechas;
-      if (getline(archivoFechasIn, lineaFechas)) {
+    std::string lineaFechas;
+    std::vector<std::string> fechas;
+    if (getline(archivoFechas, lineaFechas)) {
         fechas = split(lineaFechas, ',');
         if (!fechas.empty() && fechas.back().empty()) {
-          fechas.pop_back();
+            fechas.pop_back();
         }
-      }
-      archivoFechasIn.close();
-
-      // Actualizar asistencias.txt
-      std::ofstream archivoAsistenciasOut("asistencias.txt", std::ios::app);
-      if (!archivoAsistenciasOut.is_open()) {
-        mostrarTextoAnimado("Error al abrir el archivo de asistencias para actualizar.", 12);
-        esperar(1000);
-        break;
-      }
-
-      for (size_t i = 0; i < fechas.size(); ++i) {
-        archivoAsistenciasOut << "0";
-        if (i < fechas.size() - 1)
-          archivoAsistenciasOut << ",";
-      }
-      archivoAsistenciasOut << "\n";
-      archivoAsistenciasOut.close();
-      mostrarTextoAnimado("Asistencias.txt actualizado con la nueva fila.", 10);
-
-      // Actualizar calificaciones.txt
-      mostrarTextoAnimado("Actualizando calificaciones.txt...", 11);
-      
-      // Leer trabajos existentes
-      std::vector<std::string> trabajos;
-      std::ifstream archivoTrabajosIn("trabajos.txt");
-      std::string lineaTrabajos;
-      if (getline(archivoTrabajosIn, lineaTrabajos)) {
-        trabajos = split(lineaTrabajos, ',');
-        if (!trabajos.empty() && trabajos.back().empty()) {
-          trabajos.pop_back();
-        }
-      }
-      archivoTrabajosIn.close();
-
-      // Agregar nueva fila de calificaciones
-      std::ofstream archivoCalificacionesOut("calificaciones.txt", std::ios::app);
-      if (!archivoCalificacionesOut.is_open()) {
-        mostrarTextoAnimado("Error al abrir el archivo de calificaciones para actualizar.", 12);
-        esperar(1000);
-        break;
-      }
-
-      for (size_t i = 0; i < trabajos.size(); ++i) {
-        archivoCalificacionesOut << " ";
-        if (i < trabajos.size() - 1)
-          archivoCalificacionesOut << ",";
-      }
-      archivoCalificacionesOut << "\n";
-      archivoCalificacionesOut.close();
-      mostrarTextoAnimado("Calificaciones.txt actualizado con la nueva fila.", 10);
-
-      // Ordenar alumnos por apellido
-      std::vector<std::string> alumnos;
-      std::ifstream archivoAlumnosIn("alumnos.txt");
-      std::string linea;
-      while (getline(archivoAlumnosIn, linea)) {
-          alumnos.push_back(linea);
-      }
-      archivoAlumnosIn.close();
-      
-      std::sort(alumnos.begin(), alumnos.end(), compararPorApellido);
-      ordenarAlumnosYArchivos(alumnos);
-
-      mostrarTextoAnimado("\nAlumno " + nuevoNombre + " agregado con exito!", 10);
-      esperar(1500);
-      break;
     }
-    case 2: { // Eliminar Alumno
-      system("cls");
-      mostrarTextoAnimado("=== ELIMINAR ALUMNO ===", 12);
+    archivoFechas.close();
 
-      std::vector<std::string> alumnos;
-      std::ifstream archivoAlumnosIn("alumnos.txt");
-      std::string linea;
-      while (getline(archivoAlumnosIn, linea)) {
-        alumnos.push_back(linea);
-      }
-      archivoAlumnosIn.close();
-
-      if (alumnos.empty()) {
-        mostrarTextoAnimado("No hay alumnos para eliminar.", 14);
+    std::ofstream archivoAsistencias("asistencias.txt", std::ios::app);
+    if (!archivoAsistencias.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de asistencias.", 12);
         esperar(1000);
-        break;
-      }
-
-      mostrarTextoAnimado("\nSelecciona el alumno a eliminar:\n", 11);
-      for (size_t i = 0; i < alumnos.size(); ++i) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-        std::cout << i + 1 << ". ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cout << alumnos[i] << "\n";
-      }
-
-      int opcionAlumnoEliminar;
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-      std::cout << "\nOpcion: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::cin >> opcionAlumnoEliminar;
-      opcionAlumnoEliminar--;
-
-      if (opcionAlumnoEliminar < 0 || opcionAlumnoEliminar >= alumnos.size()) {
-        mostrarTextoAnimado("Opcion invalida.", 12);
-        esperar(1000);
-        break;
-      }
-
-      std::string alumnoEliminado = alumnos[opcionAlumnoEliminar];
-      alumnos.erase(alumnos.begin() + opcionAlumnoEliminar);
-
-      mostrarTextoAnimado("\nEliminando alumno...", 11);
-      mostrarBarraProgreso(1000);
-
-      // Guardar lista actualizada de alumnos
-      std::ofstream archivoAlumnosOut("alumnos.txt");
-      if (!archivoAlumnosOut.is_open()) {
-        mostrarTextoAnimado("Error al guardar cambios.", 12);
-        esperar(1000);
-        break;
-      }
-      for (const auto& alumno : alumnos) {
-        archivoAlumnosOut << alumno << "\n";
-      }
-      archivoAlumnosOut.close();
-
-      // Actualizar asistencias.txt
-      std::vector<std::string> lineasAsistencia;
-      std::ifstream archivoAsistenciasIn("asistencias.txt");
-      std::string lineaAsistencia;
-      while (getline(archivoAsistenciasIn, lineaAsistencia)) {
-        lineasAsistencia.push_back(lineaAsistencia);
-      }
-      archivoAsistenciasIn.close();
-
-      if (opcionAlumnoEliminar < lineasAsistencia.size()) {
-        lineasAsistencia.erase(lineasAsistencia.begin() + opcionAlumnoEliminar);
-      }
-
-      std::ofstream archivoAsistenciasOut("asistencias.txt");
-      if (!archivoAsistenciasOut.is_open()) {
-        mostrarTextoAnimado("Error al actualizar asistencias.", 12);
-        esperar(1000);
-        break;
-      }
-      for (const auto& linea : lineasAsistencia) {
-        archivoAsistenciasOut << linea << "\n";
-      }
-      archivoAsistenciasOut.close();
-
-      // Ordenar alumnos por apellido
-      std::sort(alumnos.begin(), alumnos.end(), compararPorApellido);
-      ordenarAlumnosYArchivos(alumnos);
-
-      mostrarTextoAnimado("Alumno eliminado exitosamente!", 10);
-      esperar(1000);
-      break;
+        return;
     }
-    case 0:
-      mostrarTextoAnimado("Regresando al Menu Principal...", 13);
-      esperar(500);
-      break;
-    default:
-      mostrarTextoAnimado("Opcion invalida.", 12);
-      esperar(1000);
-      break;
+
+    archivoAsistencias << nombre;
+    for (size_t i = 0; i < fechas.size(); ++i) {
+        archivoAsistencias << ",0";
     }
-  } while (opcionGestionAlumnos != 0);
+    archivoAsistencias << "\n";
+    archivoAsistencias.close();
+
+    mostrarTextoAnimado("Alumno agregado correctamente.", 10);
+    esperar(1000);
 }
 
 void mostrarCuadriculaTrabajos() {
@@ -1120,102 +791,91 @@ void mostrarCuadriculaTrabajos() {
   }
   archivoCalificaciones.close();
 
-  const int COLUMNAS_VISIBLES = 5;
-  const int ANCHO_NOMBRE = 20;
-  const int ANCHO_CALIFICACION = 18;
-
-  int desplazamiento = 0;
-
-  // Mostrar la tabla inicialmente con animación completa
-  bool primeraVez = true;
-
-  do {
-    if (primeraVez) {
-      system("cls");
-      mostrarTextoAnimado("=== LISTA DE TRABAJOS ===", 14);
-      esperar(300);
-    } else {
-      system("cls"); // Limpiar pantalla rápido
+  // Calcular el ancho máximo del nombre
+  size_t maxAnchoNombre = 0;
+  for (const auto& alumno : alumnos) {
+    if (alumno.length() > maxAnchoNombre) {
+      maxAnchoNombre = alumno.length();
     }
+  }
+  const int ANCHO_NOMBRE = std::max(30, static_cast<int>(maxAnchoNombre) + 2);
+  const int ANCHO_COLUMNA_DATOS = 15;
 
-    // Dibujar tabla
+  // Calcular cuántas columnas caben en la pantalla
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+  int anchoPantalla = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+  int columnasVisibles = (anchoPantalla - ANCHO_NOMBRE - 2) / (ANCHO_COLUMNA_DATOS + 1);
+
+  int inicioColumnas = 0;
+  bool salir = false;
+
+  while (!salir) {
+    system("cls");
+    mostrarTextoAnimado("=== LISTA DE TRABAJOS ===", 14);
+    esperar(300);
+
+    // Dibujar encabezado superior
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i)
-      std::cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i) std::cout << "-";
     std::cout << "+";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(trabajosConFecha.size());
-         ++i) {
-      for (int j = 0; j < ANCHO_CALIFICACION; ++j)
-        std::cout << "-";
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) std::cout << "-";
       std::cout << "+";
     }
     std::cout << "\n";
 
+    // Dibujar fila de nombres de trabajos
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "|";
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
     std::cout << std::left << std::setw(ANCHO_NOMBRE) << "Nombre";
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "|";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(trabajosConFecha.size());
-         ++i) {
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::string nombre = trabajosConFecha[i].first;
-      int padding = ANCHO_CALIFICACION - nombre.length();
+      std::string nombre = trabajosConFecha[inicioColumnas + i].first;
+      int padding = ANCHO_COLUMNA_DATOS - nombre.length();
       int pl = padding / 2, pr = padding - pl;
-      for (int k = 0; k < pl; ++k)
-        std::cout << " ";
+      for (int k = 0; k < pl; ++k) std::cout << " ";
       std::cout << nombre;
-      for (int k = 0; k < pr; ++k)
-        std::cout << " ";
+      for (int k = 0; k < pr; ++k) std::cout << " ";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       std::cout << "|";
     }
     std::cout << "\n";
 
+    // Dibujar fila de fechas de trabajos
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "|";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i)
-      std::cout << " ";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i) std::cout << " ";
     std::cout << "|";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(trabajosConFecha.size());
-         ++i) {
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::string fecha = trabajosConFecha[i].second;
-      int padding = ANCHO_CALIFICACION - fecha.length();
+      std::string fecha = trabajosConFecha[inicioColumnas + i].second;
+      int padding = ANCHO_COLUMNA_DATOS - fecha.length();
       int pl = padding / 2, pr = padding - pl;
-      for (int k = 0; k < pl; ++k)
-        std::cout << " ";
+      for (int k = 0; k < pl; ++k) std::cout << " ";
       std::cout << fecha;
-      for (int k = 0; k < pr; ++k)
-        std::cout << " ";
+      for (int k = 0; k < pr; ++k) std::cout << " ";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       std::cout << "|";
     }
     std::cout << "\n";
 
+    // Dibujar línea divisoria entre encabezado y datos
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i)
-      std::cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i) std::cout << "-";
     std::cout << "+";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(trabajosConFecha.size());
-         ++i) {
-      for (int j = 0; j < ANCHO_CALIFICACION; ++j)
-        std::cout << "-";
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) std::cout << "-";
       std::cout << "+";
     }
     std::cout << "\n";
 
+    // Dibujar filas de calificaciones
     for (size_t i = 0; i < alumnos.size(); ++i) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       std::cout << "|";
@@ -1224,633 +884,875 @@ void mostrarCuadriculaTrabajos() {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       std::cout << "|";
 
-      for (int j = desplazamiento;
-           j < desplazamiento + COLUMNAS_VISIBLES &&
-           j < static_cast<int>(trabajosConFecha.size());
-           ++j) {
+      for (int j = 0; j < std::min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++j) {
         std::string valor = " ";
         int colorValor = 15;
 
-        if (i < calificaciones.size() &&
-            j < static_cast<int>(calificaciones[i].size())) {
-          valor = calificaciones[i][j];
+        if (i < calificaciones.size() && inicioColumnas + j < calificaciones[i].size()) {
+          valor = calificaciones[i][inicioColumnas + j];
           try {
-            int calif = std::stoi(valor);
-            if (calif >= 6)
-              colorValor = 10;
+            float calif = std::stof(valor);
+            if (calif >= 6.0)
+              colorValor = 10; // Verde
             else
-              colorValor = 12;
+              colorValor = 12; // Rojo
           } catch (...) {
             valor = " ";
+            colorValor = 15; // Blanco por defecto
           }
         }
 
-        int padding = ANCHO_CALIFICACION - valor.length();
+        int padding = ANCHO_COLUMNA_DATOS - valor.length();
         int pl = padding / 2, pr = padding - pl;
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        for (int k = 0; k < pl; ++k)
-          std::cout << " ";
+        for (int k = 0; k < pl; ++k) std::cout << " ";
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colorValor);
         std::cout << valor;
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        for (int k = 0; k < pr; ++k)
-          std::cout << " ";
+        for (int k = 0; k < pr; ++k) std::cout << " ";
         std::cout << "|";
       }
-      if (primeraVez)
-        esperar(50); // Animación solo en la carga inicial
+
       std::cout << "\n";
     }
 
+    // Dibujar línea inferior
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     std::cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i)
-      std::cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i) std::cout << "-";
     std::cout << "+";
-
-    for (int i = desplazamiento; i < desplazamiento + COLUMNAS_VISIBLES &&
-                                 i < static_cast<int>(trabajosConFecha.size());
-         ++i) {
-      for (int j = 0; j < ANCHO_CALIFICACION; ++j)
-        std::cout << "-";
+    for (int i = 0; i < std::min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) std::cout << "-";
       std::cout << "+";
     }
     std::cout << "\n";
 
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
-    std::cout << "Usa <- -> para navegar. Presiona ENTER para regresar.\n";
+    // Instrucciones de navegación
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 3);
+    std::cout << "\nFlechas <- ->: Navegar | ENTER: Regresar al Menu Principal\n";
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 
-    char key = _getch();
-    switch (key) {
-    case 75: // Flecha izquierda
-      if (desplazamiento > 0) {
-        desplazamiento--;
-        primeraVez = false;
+    // Manejo de teclas
+    int tecla = _getch();
+    if (tecla == 224) { // Tecla de flecha
+      tecla = _getch();
+      if (tecla == 75 && inicioColumnas > 0) { // Flecha izquierda
+        inicioColumnas--;
+      } else if (tecla == 77 && inicioColumnas + columnasVisibles < trabajosConFecha.size()) { // Flecha derecha
+        inicioColumnas++;
       }
-      break;
-    case 77: // Flecha derecha
-      if (desplazamiento + COLUMNAS_VISIBLES <
-          static_cast<int>(trabajosConFecha.size())) {
-        desplazamiento++;
-        primeraVez = false;
+    } else if (tecla == 13) { // ENTER
+      salir = true;
+    }
+  }
+}
+
+void calcularPromedioParcial() {
+  std::ifstream archivoAlumnos("alumnos.txt");
+  std::ifstream archivoAsistencias("asistencias.txt");
+  std::ifstream archivoCalificaciones("calificaciones.txt");
+  std::ifstream archivoCriterios("criterios.txt");
+
+  system("cls");
+  mostrarTextoAnimado("=== CALCULO DE PROMEDIO PARCIAL ===", 11);
+  esperar(500);
+
+  if (!archivoAlumnos.is_open()) {
+    mostrarTextoAnimado("Error al abrir el archivo de alumnos.", 12);
+    esperar(1000);
+    return;
+  }
+  if (!archivoAsistencias.is_open()) {
+    mostrarTextoAnimado("Error al abrir el archivo de asistencias.", 12);
+    esperar(1000);
+    return;
+  }
+  if (!archivoCalificaciones.is_open()) {
+    mostrarTextoAnimado("Error al abrir el archivo de calificaciones.", 12);
+    esperar(1000);
+    return;
+  }
+  if (!archivoCriterios.is_open()) {
+    mostrarTextoAnimado("Error al abrir el archivo de criterios de evaluacion. "
+                        "Asegurate de haberlos configurado.",
+                        14); // Amarillo
+    esperar(1500);
+    return;
+  }
+
+  std::vector<std::string> alumnos;
+  std::string linea;
+  while (getline(archivoAlumnos, linea)) {
+    alumnos.push_back(linea);
+  }
+  archivoAlumnos.close();
+
+  std::vector<std::vector<std::string>> asistencias;
+  while (getline(archivoAsistencias, linea)) {
+    auto datos = split(linea, ',');
+    asistencias.push_back(datos);
+  }
+  archivoAsistencias.close();
+
+  std::vector<std::vector<std::string>> calificaciones;
+  while (getline(archivoCalificaciones, linea)) {
+    auto datos = split(linea, ',');
+    calificaciones.push_back(datos);
+  }
+  archivoCalificaciones.close();
+
+  // Leer criterios de evaluacion
+  float pesoAsistencias = 0, pesoTrabajos = 0, pesoExamen = 0;
+  std::string lineaCriterios;
+  if (getline(archivoCriterios, lineaCriterios)) {
+    auto criterios = split(lineaCriterios, ',');
+    if (criterios.size() >= 3) {
+      try {
+        pesoAsistencias = std::stof(criterios[0]);
+        pesoTrabajos = std::stof(criterios[1]);
+        pesoExamen = std::stof(criterios[2]);
+      } catch (...) {
+        mostrarTextoAnimado(
+            "Error al leer los pesos de los criterios de evaluacion.", 12);
+        esperar(1000);
+        return;
       }
-      break;
-    case 13: // Enter
+    } else {
+      mostrarTextoAnimado("Formato incorrecto en criterios.txt.", 12);
+      esperar(1000);
       return;
     }
+  }
+  archivoCriterios.close();
 
-  } while (true);
+  // Encontrar el indice del examen en trabajos.txt (asumimos que el ultimo
+  // trabajo es el examen)
+  int indiceExamen = -1;
+  std::ifstream archivoTrabajosIn("trabajos.txt");
+  std::string lineaTrabajos;
+  if (getline(archivoTrabajosIn, lineaTrabajos)) {
+    auto trabajos = split(lineaTrabajos, ',');
+    if (!trabajos.empty()) {
+      indiceExamen = trabajos.size() - 1; // El último elemento es el examen
+    }
+  }
+  archivoTrabajosIn.close();
+
+  if (indiceExamen == -1) {
+    mostrarTextoAnimado("No se encontro ningun trabajo/examen. Asegurate de "
+                        "haber agregado uno.",
+                        14);
+    esperar(1500);
+    return;
+  }
+
+  std::cout << "\n";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo
+  std::cout << "Promedios Parciales (Escala 0-10):\n";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
+  esperar(300);
+
+  for (size_t i = 0; i < alumnos.size(); ++i) {
+    float promedioParcial = 0;
+    std::string nombreAlumno = alumnos[i];
+
+    // Contribucion asistencias
+    float totalFechas = 0;
+    float asistenciasPresentes = 0;
+    if (i < asistencias.size()) {
+      totalFechas = asistencias[i].size();
+      for (const auto &asis : asistencias[i]) {
+        if (asis == "1") {
+          asistenciasPresentes++;
+        }
+      }
+    }
+    float porcentajeAsistencia =
+        (totalFechas > 0) ? (asistenciasPresentes / totalFechas) * 100.0 : 0;
+    float contribucionAsistencia =
+        (porcentajeAsistencia / 100.0) * (pesoAsistencias / 100.0);
+    promedioParcial += contribucionAsistencia;
+
+    // Contribucion trabajos (promedio de calificaciones de trabajos)
+    float sumaCalificacionesTrabajos = 0;
+    int numTrabajosCalificados = 0;
+    float calificacionExamen = 0;
+
+    if (i < calificaciones.size()) {
+      for (size_t j = 0; j < calificaciones[i].size(); ++j) {
+        if (static_cast<int>(j) == indiceExamen) {
+          try {
+            calificacionExamen = std::stof(calificaciones[i][j]);
+          } catch (...) {
+            calificacionExamen = 0;
+          }
+        } else if (static_cast<int>(j) <
+                   indiceExamen) { // Considerar solo trabajos ANTES del examen
+          try {
+            sumaCalificacionesTrabajos += std::stof(calificaciones[i][j]);
+            numTrabajosCalificados++;
+          } catch (...) {
+            // Ignorar calificaciones invalidas
+          }
+        }
+      }
+    }
+    float promedioTrabajos =
+        (numTrabajosCalificados > 0)
+            ? sumaCalificacionesTrabajos / numTrabajosCalificados
+            : 0;
+    float contribucionTrabajos =
+        (promedioTrabajos / 10.0) *
+        (pesoTrabajos / 100.0); // Asumiendo trabajos calificados sobre 10
+    promedioParcial += contribucionTrabajos;
+
+    // Contribucion examen
+    float contribucionExamen =
+        (calificacionExamen / 10.0) *
+        (pesoExamen / 100.0); // Asumiendo examen calificado sobre 10
+    promedioParcial += contribucionExamen;
+
+  
+    promedioParcial /= 10.0;
+
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde
+    std::cout << nombreAlumno << ": ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
+    std::cout << std::fixed << std::setprecision(2) << promedioParcial << "\n";
+    esperar(100);
+  }
+
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 3); // Cian
+  std::cout << "\nPresiona ENTER para regresar al menu principal.";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
+  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear input buffer
+  std::cin.get(); // Esperar a que el usuario presione Enter
+}
+
+void calcularPromedioSemestre() {
+  system("cls");
+  mostrarTextoAnimado("=== CALCULO DE PROMEDIO SEMESTRAL ===", 11);
+  esperar(500);
+
+  
+  mostrarTextoAnimado(
+      "Esta función promediaría los promedios de los 3 parciales.", 14);
+  mostrarTextoAnimado(
+      "Como solo hay datos de un parcial, se mostrará ese promedio.", 14);
+  esperar(2000);
+
+
+
+  calcularPromedioParcial(); 
 }
 
 void modificarTrabajos() {
-  while (true) {
+  system("cls");
+  mostrarTextoAnimado("=== MODIFICACION DE TRABAJOS ===", 14);
+  esperar(500);
+
+  std::ifstream archivoAlumnos("alumnos.txt");
+  std::ifstream archivoTrabajos("trabajos.txt");
+  std::ifstream archivoCalificaciones("calificaciones.txt");
+
+  if (!archivoAlumnos.is_open()) {
+    mostrarTextoAnimado("Error al abrir el archivo de alumnos.", 12);
+    esperar(1000);
+    return;
+  }
+  if (!archivoTrabajos.is_open()) {
+    mostrarTextoAnimado("Error al abrir el archivo de trabajos.", 12);
+    esperar(1000);
+    return;
+  }
+  if (!archivoCalificaciones.is_open()) {
+    mostrarTextoAnimado("Error al abrir el archivo de calificaciones.", 12);
+    esperar(1000);
+    return;
+  }
+
+  std::vector<std::string> alumnos;
+  std::string linea;
+  while (getline(archivoAlumnos, linea)) {
+    alumnos.push_back(linea);
+  }
+  archivoAlumnos.close();
+
+  std::vector<std::pair<std::string, std::string>> trabajosConFecha;
+  std::string lineaTrabajos;
+  if (getline(archivoTrabajos, lineaTrabajos)) {
+    std::vector<std::string> trabajos = split(lineaTrabajos, ',');
+    if (!trabajos.empty() && trabajos.back().empty()) {
+      trabajos.pop_back();
+    }
+    for (const auto &trabajo : trabajos) {
+      size_t open_paren = trabajo.find('(');
+      size_t close_paren = trabajo.find(')');
+      if (open_paren != std::string::npos && close_paren != std::string::npos &&
+          close_paren > open_paren) {
+        std::string nombre = trabajo.substr(0, open_paren);
+        nombre.erase(0, nombre.find_first_not_of(" \t\n\r\f\v"));
+        nombre.erase(nombre.find_last_not_of(" \t\n\r\f\v") + 1);
+        std::string fecha =
+            trabajo.substr(open_paren + 1, close_paren - open_paren - 1);
+        trabajosConFecha.push_back({nombre, fecha});
+      } else {
+        std::string nombre = trabajo;
+        nombre.erase(0, nombre.find_first_not_of(" \t\n\r\f\v"));
+        nombre.erase(nombre.find_last_not_of(" \t\n\r\f\v") + 1);
+        trabajosConFecha.push_back({nombre, ""});
+      }
+    }
+  }
+  archivoTrabajos.close();
+
+  std::vector<std::vector<std::string>> calificaciones;
+  while (getline(archivoCalificaciones, linea)) {
+    auto datos = split(linea, ',');
+    calificaciones.push_back(datos);
+  }
+  archivoCalificaciones.close();
+
+  if (trabajosConFecha.empty()) {
+    mostrarTextoAnimado("No hay trabajos para modificar.", 14);
+    esperar(1000);
+    return;
+  }
+
+  mostrarTextoAnimado("\nSelecciona el trabajo a modificar:", 11);
+  for (size_t i = 0; i < trabajosConFecha.size(); ++i) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
+    std::cout << i + 1 << ". ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+    std::cout << trabajosConFecha[i].first;
+    if (!trabajosConFecha[i].second.empty()) {
+      std::cout << " (" << trabajosConFecha[i].second << ")";
+    }
+    std::cout << "\n";
+  }
+
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+  std::cout << "0. Regresar\n";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+
+  int opcionTrabajo;
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+  std::cout << "\nOpción: ";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+  std::cin >> opcionTrabajo;
+  opcionTrabajo--;
+
+  if (opcionTrabajo == -1) { // Si el usuario ingreso 0
+      mostrarTextoAnimado("Regresando...", 13);
+      esperar(500);
+      return; // Salir de la funcion
+  }
+
+  if (opcionTrabajo < 0 ||
+      opcionTrabajo >= static_cast<int>(trabajosConFecha.size())) {
+    mostrarTextoAnimado("Opción inválida.", 12);
+    esperar(1000);
+    return;
+  }
+
+  system("cls");
+  mostrarTextoAnimado("=== MODIFICANDO TRABAJO ===", 14);
+  mostrarTextoAnimado("Trabajo: " + trabajosConFecha[opcionTrabajo].first, 11);
+
+  for (size_t i = 0; i < alumnos.size(); ++i) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
+    std::cout << "\n" << alumnos[i] << "\n";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "Calificación (0-10): ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+
+    std::string valor;
+    std::cin >> valor;
+    float calificacion;
+    try {
+      calificacion = std::stof(valor);
+      if (calificacion < 0)
+        calificacion = 0;
+      if (calificacion > 10)
+        calificacion = 10;
+    } catch (...) {
+      calificacion = 0;
+    }
+
+    // Actualizar calificación
+    if (i < calificaciones.size() &&
+        opcionTrabajo < static_cast<int>(calificaciones[i].size())) {
+      calificaciones[i][opcionTrabajo] = std::to_string(calificacion);
+    }
+  }
+
+  // Guardar cambios
+  mostrarTextoAnimado("\nGuardando cambios...", 11);
+  mostrarBarraProgreso(1000);
+
+  std::ofstream archivoCalificacionesOut("calificaciones.txt");
+  if (!archivoCalificacionesOut.is_open()) {
+    mostrarTextoAnimado("Error al guardar el archivo de calificaciones.", 12);
+    esperar(1000);
+  } else {
+    for (const auto &fila : calificaciones) {
+      for (size_t j = 0; j < fila.size(); ++j) {
+        archivoCalificacionesOut << fila[j];
+        if (j != fila.size() - 1)
+          archivoCalificacionesOut << ",";
+      }
+      archivoCalificacionesOut << "\n";
+    }
+    archivoCalificacionesOut.close();
+    mostrarTextoAnimado("\n¡Calificaciones actualizadas correctamente!", 10);
+  }
+
+  // Esperar a que el usuario presione Enter o 0 para regresar al menu de gestion de trabajos
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 3);
+  std::cout << "\nPresiona ENTER o 0 para regresar al menu de gestion de trabajos.";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear buffer before get()
+  std::cin.get();
+
+  esperar(1000);
+}
+
+void agregarTrabajo() {
     system("cls");
-    mostrarTextoAnimado("=== MODIFICACION DE TRABAJOS ===", 14);
+    mostrarTextoAnimado("=== AGREGAR TRABAJO ===", 14);
     esperar(500);
 
-    std::ifstream archivoAlumnos("alumnos.txt");
-    std::ifstream archivoTrabajos("trabajos.txt");
-    std::ifstream archivoCalificaciones("calificaciones.txt");
+    std::string nombreTrabajo;
+    do {
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear input buffer
+        std::cout << "\nIngrese el nombre del trabajo: ";
+        std::getline(std::cin, nombreTrabajo);
+        if (nombreTrabajo.empty()) {
+            mostrarTextoAnimado("El nombre no puede estar vacio.", 12);
+            continue;
+        }
+        break;
+    } while (true);
 
-    if (!archivoAlumnos.is_open() || !archivoTrabajos.is_open() ||
-        !archivoCalificaciones.is_open()) {
-      mostrarTextoAnimado("Error al abrir alguno de los archivos necesarios.",
-                          12);
-      esperar(1000);
+    std::string fecha;
+    do {
+        std::cout << "\nIngrese la fecha del trabajo (DD/MM/AAAA) o deje en blanco: ";
+        std::getline(std::cin, fecha);
+        if (!fecha.empty() && !validarFormatoFecha(fecha)) {
+            mostrarTextoAnimado("Formato de fecha invalido. Use DD/MM/AAAA.", 12);
+            continue;
+        }
+        break;
+    } while (true);
+
+    std::ifstream archivoTrabajosIn("trabajos.txt");
+    if (!archivoTrabajosIn.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de trabajos.", 12);
+        esperar(1000);
+        return;
+    }
+
+    std::vector<std::string> trabajos;
+    std::string linea;
+    if (getline(archivoTrabajosIn, linea)) {
+        trabajos = split(linea, ',');
+        if (!trabajos.empty() && trabajos.back().empty()) {
+            trabajos.pop_back();
+        }
+    }
+    archivoTrabajosIn.close();
+
+    // Verificar si el trabajo ya existe
+    std::string trabajoCompleto = fecha.empty() ? nombreTrabajo : nombreTrabajo + " (" + fecha + ")";
+    for (const auto& trabajo : trabajos) {
+        if (trabajo == trabajoCompleto) {
+            mostrarTextoAnimado("El trabajo ya existe en el sistema.", 12);
+            esperar(1000);
+            return;
+        }
+    }
+
+    // Agregar el nuevo trabajo
+    trabajos.push_back(trabajoCompleto);
+
+    // Guardar la lista actualizada
+    std::ofstream archivoTrabajosOut("trabajos.txt");
+    if (!archivoTrabajosOut.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de trabajos para escritura.", 12);
+        esperar(1000);
+        return;
+    }
+
+    for (size_t i = 0; i < trabajos.size(); ++i) {
+        archivoTrabajosOut << trabajos[i];
+        if (i < trabajos.size() - 1) {
+            archivoTrabajosOut << ",";
+        }
+    }
+    archivoTrabajosOut.close();
+
+    // Actualizar archivo de calificaciones
+    std::ifstream archivoAlumnos("alumnos.txt");
+    if (!archivoAlumnos.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de alumnos.", 12);
+        esperar(1000);
+        return;
+    }
+
+    std::vector<std::string> alumnos;
+    while (getline(archivoAlumnos, linea)) {
+        alumnos.push_back(linea);
+    }
+    archivoAlumnos.close();
+
+    std::ofstream archivoCalificaciones("calificaciones.txt", std::ios::app);
+    if (!archivoCalificaciones.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de calificaciones.", 12);
+        esperar(1000);
+        return;
+    }
+
+    for (const auto& alumno : alumnos) {
+        archivoCalificaciones << alumno << "," << trabajoCompleto << ",0\n";
+    }
+    archivoCalificaciones.close();
+
+    mostrarTextoAnimado("Trabajo agregado correctamente.", 10);
+    esperar(1000);
+}
+
+void gestionarTrabajos() {
+  system("cls");
+  mostrarTextoAnimado("=== GESTION DE TRABAJOS ===", 10);
+  esperar(500);
+
+  while (true) {
+    system("cls");
+    mostrarTextoAnimado("=== GESTION DE TRABAJOS ===", 10);
+    mostrarTextoAnimado("\n1. Agregar trabajo", 11);
+    mostrarTextoAnimado("2. Eliminar trabajo", 12);
+    mostrarTextoAnimado("0. Regresar", 14);
+
+    int opcion;
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "\nOpción: ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+    std::cin >> opcion;
+
+    switch (opcion) {
+    case 1:
+      agregarTrabajo();
+      break;
+    case 2:
+      modificarTrabajos();
+      break;
+    case 0:
       return;
+    default:
+      mostrarTextoAnimado("Opción inválida.", 12);
+      esperar(1000);
+    }
+  }
+}
+
+void gestionarCriteriosEvaluacion() {
+  system("cls");
+  mostrarTextoAnimado("=== GESTION DE CRITERIOS DE EVALUACION ===", 10);
+  esperar(500);
+
+  while (true) {
+    system("cls");
+    mostrarTextoAnimado("=== GESTION DE CRITERIOS DE EVALUACION ===", 10);
+    esperar(300);
+
+    bool criteriosExisten = existenCriteriosEvaluacion();
+
+    if (criteriosExisten) {
+      mostrarTablaCriterios();
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+      std::cout << "Selecciona una opcion:\n";
+      std::cout << "1. Modificar criterios\n";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
+      std::cout << "0. Regresar\n";
+    } else {
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+      std::cout << "Selecciona una opcion:\n";
+      std::cout << "1. Agregar criterios\n";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
+      std::cout << "0. Regresar\n";
+    }
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+
+    int opcion;
+    std::cout << "\nOpcion: ";
+    std::cin >> opcion;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    if (criteriosExisten) { // Si existen, opcion 1 es modificar, opcion 0 es regresar
+      switch (opcion) {
+      case 1:
+        modificarCriteriosEvaluacion();
+        break;
+      case 0:
+        mostrarTextoAnimado("Regresando...", 13);
+        esperar(500);
+        return; // Salir de la funcion
+      default:
+        mostrarTextoAnimado("Opcion invalida.", 12);
+        esperar(1000);
+        break;
+      }
+    } else { // Si no existen, opcion 1 es agregar, opcion 0 es regresar
+      switch (opcion) {
+      case 1:
+        agregarCriteriosEvaluacion();
+        break;
+      case 0:
+        mostrarTextoAnimado("Regresando...", 13);
+        esperar(500);
+        return; // Salir de la funcion
+      default:
+        mostrarTextoAnimado("Opcion invalida.", 12);
+        esperar(1000);
+        break;
+      }
+    }
+  }
+}
+
+void modificarCalificacionAlumno() {
+    if (!existenCriteriosEvaluacion()) {
+        mostrarTextoAnimado("No hay criterios de evaluacion definidos.", 12);
+        esperar(1000);
+        return;
+    }
+
+    std::ifstream archivoAlumnos("alumnos.txt");
+    if (!archivoAlumnos.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de alumnos.", 12);
+        esperar(1000);
+        return;
     }
 
     std::vector<std::string> alumnos;
     std::string linea;
     while (getline(archivoAlumnos, linea)) {
-      alumnos.push_back(linea);
+        alumnos.push_back(linea);
     }
     archivoAlumnos.close();
 
-    std::vector<std::string> trabajos;
-    std::string lineaTrabajos;
-    if (getline(archivoTrabajos, lineaTrabajos)) {
-      trabajos = split(lineaTrabajos, ',');
-      if (!trabajos.empty() && trabajos.back().empty()) {
-        trabajos.pop_back();
-      }
+    if (alumnos.empty()) {
+        mostrarTextoAnimado("No hay alumnos registrados.", 12);
+        esperar(1000);
+        return;
     }
-    archivoTrabajos.close();
 
-    std::vector<std::vector<std::string>> calificaciones;
+    system("cls");
+    mostrarTextoAnimado("=== MODIFICAR CALIFICACION ===", 14);
+    std::cout << "\nSeleccione el alumno:\n\n";
+
+    for (size_t i = 0; i < alumnos.size(); ++i) {
+        std::cout << i + 1 << ". " << alumnos[i] << "\n";
+    }
+
+    float seleccion;
+    std::string entrada;
+    do {
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Clear input buffer
+        std::cout << "\nIngrese el numero del alumno (o 0 para regresar): ";
+        std::getline(std::cin, entrada);
+        if (!validarEntradaNumerica(entrada, seleccion, 0, alumnos.size())) {
+            mostrarTextoAnimado("Seleccion invalida. Intente de nuevo.", 12);
+            continue;
+        }
+        break;
+    } while (true);
+
+    if (seleccion == 0) {
+        mostrarTextoAnimado("Regresando al menu principal...", 13);
+        esperar(500);
+        return;
+    }
+
+    std::string alumnoSeleccionado = alumnos[static_cast<int>(seleccion) - 1];
+    mostrarTablaCriterios();
+
+    std::ifstream archivoCriterios("criterios.txt");
+    if (!archivoCriterios.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de criterios.", 12);
+        esperar(1000);
+        return;
+    }
+
+    std::vector<std::string> criterios;
+    while (getline(archivoCriterios, linea)) {
+        criterios.push_back(linea);
+    }
+    archivoCriterios.close();
+
+    std::cout << "\nSeleccione el criterio a modificar:\n\n";
+    for (size_t i = 0; i < criterios.size(); ++i) {
+        std::cout << i + 1 << ". " << criterios[i] << "\n";
+    }
+
+    float criterioSeleccionado;
+    do {
+        std::cout << "\nIngrese el numero del criterio (o 0 para regresar): ";
+        std::getline(std::cin, entrada);
+        if (!validarEntradaNumerica(entrada, criterioSeleccionado, 0, criterios.size())) {
+            mostrarTextoAnimado("Seleccion invalida. Intente de nuevo.", 12);
+            continue;
+        }
+        break;
+    } while (true);
+
+    if (criterioSeleccionado == 0) {
+        mostrarTextoAnimado("Regresando al menu principal...", 13);
+        esperar(500);
+        return;
+    }
+
+    float nuevaCalificacion;
+    do {
+        std::cout << "\nIngrese la nueva calificacion (0-10): ";
+        std::getline(std::cin, entrada);
+        if (!validarEntradaNumerica(entrada, nuevaCalificacion, 0, 10)) {
+            mostrarTextoAnimado("Calificacion invalida. Debe ser un numero entre 0 y 10.", 12);
+            continue;
+        }
+        break;
+    } while (true);
+
+    std::ifstream archivoCalificaciones("calificaciones.txt");
+    if (!archivoCalificaciones.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de calificaciones.", 12);
+        esperar(1000);
+        return;
+    }
+
+    std::vector<std::string> calificaciones;
     while (getline(archivoCalificaciones, linea)) {
-      auto datos = split(linea, ',');
-      calificaciones.push_back(datos);
+        calificaciones.push_back(linea);
     }
     archivoCalificaciones.close();
 
-    if (trabajos.empty() || alumnos.empty()) {
-      if (trabajos.empty())
-        mostrarTextoAnimado("No hay trabajos disponibles para modificar.", 14);
-      if (alumnos.empty())
-        mostrarTextoAnimado("No hay alumnos disponibles para modificar.", 14);
-      esperar(1500);
-      return;
-    }
-
-    mostrarTextoAnimado("\nSelecciona el trabajo a modificar:", 11);
-    std::cout << "\n";
-    for (size_t i = 0; i < trabajos.size(); ++i) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-      std::cout << i + 1 << ". ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::cout << trabajos[i] << "\n";
-      esperar(100);
-    }
-
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
-    std::cout << "0. Regresar al Menu Principal\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-
-    int opcionModificar;
-    std::cout << "\nOpcion: ";
-    std::cin >> opcionModificar;
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    if (opcionModificar == 0) {
-      mostrarTextoAnimado("Regresando al Menu Principal...", 13);
-      esperar(500);
-      return;
-    }
-
-    int indiceTrabajo = opcionModificar - 1;
-
-    if (indiceTrabajo < 0 ||
-        indiceTrabajo >= static_cast<int>(trabajos.size())) {
-      mostrarTextoAnimado("Opcion invalida.", 12);
-      esperar(1000);
-      continue;
-    }
-
-    system("cls");
-    mostrarTextoAnimado("=== REGISTRO DE CALIFICACIONES ===", 14);
-    mostrarTextoAnimado("Trabajo: " + trabajos[indiceTrabajo], 11);
-
-    for (size_t i = 0; i < alumnos.size(); ++i) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-      std::cout << "\n" << alumnos[i] << "\n";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-      std::cout << "Calificacion (1-10): ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-
-      std::string valor;
-      std::cin >> valor;
-
-      // Validar que la calificación esté entre 1 y 10
-      try {
-        int calificacion = std::stoi(valor);
-        if (calificacion < 1 || calificacion > 10) {
-          valor = " ";
+    bool encontrado = false;
+    for (size_t i = 0; i < calificaciones.size(); ++i) {
+        auto datos = split(calificaciones[i], ',');
+        if (datos.size() >= 3 && datos[0] == alumnoSeleccionado) {
+            std::stringstream ss;
+            ss << alumnoSeleccionado << "," << criterios[static_cast<int>(criterioSeleccionado) - 1] << "," << nuevaCalificacion;
+            calificaciones[i] = ss.str();
+            encontrado = true;
+            break;
         }
-      } catch (...) {
-        valor = " ";
-      }
-
-      if (i < calificaciones.size() &&
-          indiceTrabajo < static_cast<int>(calificaciones[i].size())) {
-        calificaciones[i][indiceTrabajo] = valor;
-      } else {
-        mostrarTextoAnimado("Error: Datos incompletos para este alumno.", 12);
-      }
     }
 
-    mostrarTextoAnimado("\nGuardando cambios...", 11);
-    mostrarBarraProgreso(1000);
-
-    std::ofstream archivoOut("calificaciones.txt");
-    if (!archivoOut.is_open()) {
-      mostrarTextoAnimado("Error al guardar el archivo de calificaciones.", 12);
-      esperar(1000);
-    } else {
-      for (const auto &fila : calificaciones) {
-        for (size_t j = 0; j < fila.size(); ++j) {
-          archivoOut << fila[j];
-          if (j != fila.size() - 1)
-            archivoOut << ",";
-        }
-        archivoOut << "\n";
-      }
-      archivoOut.close();
-      mostrarTextoAnimado("\n¡Calificaciones actualizadas correctamente!", 10);
+    if (!encontrado) {
+        std::stringstream ss;
+        ss << alumnoSeleccionado << "," << criterios[static_cast<int>(criterioSeleccionado) - 1] << "," << nuevaCalificacion;
+        calificaciones.push_back(ss.str());
     }
 
+    std::ofstream archivoCalificacionesOut("calificaciones.txt");
+    if (!archivoCalificacionesOut.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de calificaciones para escritura.", 12);
+        esperar(1000);
+        return;
+    }
+
+    for (const auto& cal : calificaciones) {
+        archivoCalificacionesOut << cal << "\n";
+    }
+    archivoCalificacionesOut.close();
+
+    mostrarTextoAnimado("Calificacion actualizada correctamente.", 10);
     esperar(1000);
-  }
 }
 
-void agregarTrabajo() {
-  system("cls");
-  mostrarTextoAnimado("=== AGREGAR TRABAJO ===", 10);
-  esperar(500);
+void mostrarTablaCriterios() {
+  if (!existenCriteriosEvaluacion()) {
+    return;
+  }
 
-  std::string nuevoTrabajo;
+  std::ifstream archivoIn("criterios.txt");
+  std::string linea;
+  std::getline(archivoIn, linea);
+  archivoIn.close();
+
+  auto valores = split(linea, ',');
+  float valorAsistencias = std::stof(valores[0]);
+  float valorTrabajos = std::stof(valores[1]);
+  float valorExamen = std::stof(valores[2]);
+
+  // Dibujar tabla
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-  std::cout << "\nIntroduce el nombre del nuevo trabajo: ";
+  std::cout << "\n┌────────────────────┬──────────────┐\n";
+  std::cout << "│ Criterio          │ Porcentaje   │\n";
+  std::cout << "├────────────────────┼──────────────┤\n";
+
+  // Asistencias
+  std::cout << "│ Asistencias       │ ";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
+  std::cout << std::right << std::setw(10) << valorAsistencias << "% ";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
+  std::cout << "│\n";
+
+  // Trabajos
+  std::cout << "│ Trabajos          │ ";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
+  std::cout << std::right << std::setw(10) << valorTrabajos << "% ";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
+  std::cout << "│\n";
+
+  // Examen
+  std::cout << "│ Examen            │ ";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
+  std::cout << std::right << std::setw(10) << valorExamen << "% ";
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
+  std::cout << "│\n";
+
+  std::cout << "└────────────────────┴──────────────┘\n\n";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-  std::getline(std::cin, nuevoTrabajo);
-
-  if (nuevoTrabajo.empty()) {
-    mostrarTextoAnimado("Nombre invalido.", 12);
-    esperar(1000);
-    return;
-  }
-
-  mostrarTextoAnimado("Guardando trabajo en trabajos.txt...", 11);
-  std::ofstream archivoTrabajosOut("trabajos.txt", std::ios::app);
-  if (!archivoTrabajosOut.is_open()) {
-    mostrarTextoAnimado("Error al abrir el archivo de trabajos para agregar.",
-                        12);
-    esperar(1000);
-    return;
-  }
-  archivoTrabajosOut << nuevoTrabajo << ",";
-  archivoTrabajosOut.close();
-  mostrarTextoAnimado("Trabajo agregado a trabajos.txt", 10);
-
-  mostrarTextoAnimado("Actualizando calificaciones.txt...", 11);
-
-  std::vector<std::string> lineasCalificacion;
-  std::ifstream archivoCalificacionesIn("calificaciones.txt");
-  std::string lineaCalificacion;
-  while (getline(archivoCalificacionesIn, lineaCalificacion)) {
-    lineasCalificacion.push_back(lineaCalificacion);
-  }
-  archivoCalificacionesIn.close();
-
-  std::ofstream archivoCalificacionesOut("calificaciones.txt");
-  if (!archivoCalificacionesOut.is_open()) {
-    mostrarTextoAnimado(
-        "Error al abrir el archivo de calificaciones para actualizar.", 12);
-    esperar(1000);
-    return;
-  }
-
-  for (const auto &l : lineasCalificacion) {
-    if (!l.empty()) {
-      archivoCalificacionesOut << l << ",\n";
-    } else {
-      archivoCalificacionesOut << "\n";
-    }
-  }
-  archivoCalificacionesOut.close();
-  mostrarTextoAnimado("Calificaciones.txt actualizado con la nueva columna.",
-                      10);
-
-  mostrarTextoAnimado("\nTrabajo " + nuevoTrabajo + " agregado con exito!", 10);
-  esperar(1500);
 }
 
-void agregarTrabajoConFecha() {
-  system("cls");
-  mostrarTextoAnimado("=== AGREGAR TRABAJO CON FECHA ===", 10);
-  esperar(500);
-
-  std::string nuevoTrabajo;
-  std::string fechaTrabajo;
-
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-  std::cout << "\nIntroduce el nombre del nuevo trabajo: ";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-  std::getline(std::cin, nuevoTrabajo);
-
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-  std::cout << "Introduce la fecha del trabajo (DD/MM/AAAA): ";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-  std::getline(std::cin, fechaTrabajo);
-
-  if (nuevoTrabajo.empty() || fechaTrabajo.empty()) {
-    mostrarTextoAnimado("Datos invalidos.", 12);
-    esperar(1000);
-    return;
-  }
-
-  // Combinar nombre y fecha
-  std::string trabajoCompleto = nuevoTrabajo + " (" + fechaTrabajo + ")";
-
-  mostrarTextoAnimado("Guardando trabajo en trabajos.txt...", 11);
-  std::ofstream archivoTrabajosOut("trabajos.txt", std::ios::app);
-  if (!archivoTrabajosOut.is_open()) {
-    mostrarTextoAnimado("Error al abrir el archivo de trabajos para agregar.",
-                        12);
-    esperar(1000);
-    return;
-  }
-  archivoTrabajosOut << trabajoCompleto << ",";
-  archivoTrabajosOut.close();
-  mostrarTextoAnimado("Trabajo agregado a trabajos.txt", 10);
-
-  mostrarTextoAnimado("Actualizando calificaciones.txt...", 11);
-
-  std::vector<std::string> lineasCalificacion;
-  std::ifstream archivoCalificacionesIn("calificaciones.txt");
-  std::string lineaCalificacion;
-  while (getline(archivoCalificacionesIn, lineaCalificacion)) {
-    lineasCalificacion.push_back(lineaCalificacion);
-  }
-  archivoCalificacionesIn.close();
-
-  std::ofstream archivoCalificacionesOut("calificaciones.txt");
-  if (!archivoCalificacionesOut.is_open()) {
-    mostrarTextoAnimado(
-        "Error al abrir el archivo de calificaciones para actualizar.", 12);
-    esperar(1000);
-    return;
-  }
-
-  for (const auto &l : lineasCalificacion) {
-    if (!l.empty()) {
-      archivoCalificacionesOut << l << ",\n";
-    } else {
-      archivoCalificacionesOut << "\n";
-    }
-  }
-  archivoCalificacionesOut.close();
-  mostrarTextoAnimado("Calificaciones.txt actualizado con la nueva columna.",
-                      10);
-
-  mostrarTextoAnimado("\nTrabajo " + trabajoCompleto + " agregado con exito!",
-                      10);
-  esperar(1500);
-}
-
-void gestionarTrabajos() {
-  int opcionGestionTrabajos;
+void gestionarCriterios() {
+  int opcion;
   do {
     system("cls");
-    mostrarTextoAnimado("=== GESTION DE TRABAJOS ===", 10);
+    mostrarTextoAnimado("=== GESTION DE CRITERIOS DE EVALUACION ===", 10);
+    esperar(500);
 
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-    std::cout << "\nSelecciona una opcion:\n";
-    std::cout << "1. Agregar Trabajo\n";
-    std::cout << "2. Eliminar Trabajo\n";
-    std::cout << "3. Modificar Trabajo\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
-    std::cout << "0. Regresar al Menu Principal\n";
+    // Mostrar tabla de criterios si existen
+    mostrarTablaCriterios();
+
+    if (!existenCriteriosEvaluacion()) {
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+      std::cout << "Selecciona una opcion:\n";
+      std::cout << "1. Agregar Criterios de Evaluacion\n";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
+      std::cout << "0. Regresar al Menu Principal\n";
+    } else {
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+      std::cout << "Selecciona una opcion:\n";
+      std::cout << "1. Modificar Criterios de Evaluacion\n";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
+      std::cout << "0. Regresar al Menu Principal\n";
+    }
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 
     std::cout << "\nSelecciona una opcion: ";
-    std::cin >> opcionGestionTrabajos;
+    std::cin >> opcion;
     std::cin.ignore();
 
-    switch (opcionGestionTrabajos) {
-    case 1: { // Agregar Trabajo
-      system("cls");
-      mostrarTextoAnimado("=== AGREGAR TRABAJO ===", 10);
-      esperar(500);
-
-      std::string nuevoTrabajo;
-      std::string fechaTrabajo;
-
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::cout << "\nIntroduce el nombre del nuevo trabajo: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::getline(std::cin, nuevoTrabajo);
-
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::cout << "Introduce la fecha del trabajo (DD/MM/AAAA): ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::getline(std::cin, fechaTrabajo);
-
-      if (nuevoTrabajo.empty() || fechaTrabajo.empty()) {
-        mostrarTextoAnimado("Datos invalidos.", 12);
-        esperar(1000);
-        break;
+    switch (opcion) {
+    case 1:
+      if (!existenCriteriosEvaluacion()) {
+        agregarCriteriosEvaluacion();
+      } else {
+        modificarCriteriosEvaluacion();
       }
-
-      std::string trabajoCompleto = nuevoTrabajo + " (" + fechaTrabajo + ")";
-
-      mostrarTextoAnimado("Guardando trabajo...", 11);
-      std::ofstream archivoTrabajosOut("trabajos.txt", std::ios::app);
-      if (!archivoTrabajosOut.is_open()) {
-        mostrarTextoAnimado("Error al abrir el archivo de trabajos.", 12);
-        esperar(1000);
-        break;
-      }
-      archivoTrabajosOut << trabajoCompleto << ",";
-      archivoTrabajosOut.close();
-
-      // Actualizar calificaciones.txt
-      std::vector<std::string> lineasCalificacion;
-      std::ifstream archivoCalificacionesIn("calificaciones.txt");
-      std::string lineaCalificacion;
-      while (getline(archivoCalificacionesIn, lineaCalificacion)) {
-        lineasCalificacion.push_back(lineaCalificacion);
-      }
-      archivoCalificacionesIn.close();
-
-      std::ofstream archivoCalificacionesOut("calificaciones.txt");
-      if (!archivoCalificacionesOut.is_open()) {
-        mostrarTextoAnimado("Error al actualizar calificaciones.", 12);
-        esperar(1000);
-        break;
-      }
-
-      for (const auto &l : lineasCalificacion) {
-        if (!l.empty()) {
-          archivoCalificacionesOut << l << ",\n";
-        } else {
-          archivoCalificacionesOut << "\n";
-        }
-      }
-      archivoCalificacionesOut.close();
-
-      mostrarTextoAnimado("Trabajo agregado exitosamente!", 10);
-      esperar(1000);
       break;
-    }
-    case 2: { // Eliminar Trabajo
-      system("cls");
-      mostrarTextoAnimado("=== ELIMINAR TRABAJO ===", 12);
-
-      std::vector<std::string> trabajos;
-      std::ifstream archivoTrabajosIn("trabajos.txt");
-      std::string lineaTrabajos;
-      if (getline(archivoTrabajosIn, lineaTrabajos)) {
-        trabajos = split(lineaTrabajos, ',');
-        if (!trabajos.empty() && trabajos.back().empty()) {
-          trabajos.pop_back();
-        }
-      }
-      archivoTrabajosIn.close();
-
-      if (trabajos.empty()) {
-        mostrarTextoAnimado("No hay trabajos para eliminar.", 14);
-        esperar(1000);
-        break;
-      }
-
-      mostrarTextoAnimado("\nSelecciona el trabajo a eliminar:\n", 11);
-      for (size_t i = 0; i < trabajos.size(); ++i) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-        std::cout << i + 1 << ". ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cout << trabajos[i] << "\n";
-      }
-
-      int opcionTrabajoEliminar;
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-      std::cout << "\nOpcion: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::cin >> opcionTrabajoEliminar;
-      opcionTrabajoEliminar--;
-
-      if (opcionTrabajoEliminar < 0 ||
-          opcionTrabajoEliminar >= trabajos.size()) {
-        mostrarTextoAnimado("Opcion invalida.", 12);
-        esperar(1000);
-        break;
-      }
-
-      std::string trabajoEliminado = trabajos[opcionTrabajoEliminar];
-      trabajos.erase(trabajos.begin() + opcionTrabajoEliminar);
-
-      mostrarTextoAnimado("\nEliminando trabajo...", 11);
-      mostrarBarraProgreso(1000);
-
-      std::ofstream archivoTrabajosOut("trabajos.txt");
-      if (!archivoTrabajosOut.is_open()) {
-        mostrarTextoAnimado("Error al guardar cambios.", 12);
-        esperar(1000);
-        break;
-      }
-
-      for (size_t i = 0; i < trabajos.size(); ++i) {
-        archivoTrabajosOut << trabajos[i];
-        if (i < trabajos.size() - 1)
-          archivoTrabajosOut << ",";
-      }
-      archivoTrabajosOut << ",";
-      archivoTrabajosOut.close();
-
-      // Actualizar calificaciones.txt
-      std::vector<std::vector<std::string>> calificaciones;
-      std::ifstream archivoCalificacionesIn("calificaciones.txt");
-      std::string lineaCalificacion;
-      while (getline(archivoCalificacionesIn, lineaCalificacion)) {
-        std::vector<std::string> datos = split(lineaCalificacion, ',');
-        if (opcionTrabajoEliminar < datos.size()) {
-          datos.erase(datos.begin() + opcionTrabajoEliminar);
-        }
-        calificaciones.push_back(datos);
-      }
-      archivoCalificacionesIn.close();
-
-      std::ofstream archivoCalificacionesOut("calificaciones.txt");
-      if (!archivoCalificacionesOut.is_open()) {
-        mostrarTextoAnimado("Error al actualizar calificaciones.", 12);
-        esperar(1000);
-        break;
-      }
-
-      for (const auto &fila : calificaciones) {
-        for (size_t j = 0; j < fila.size(); ++j) {
-          archivoCalificacionesOut << fila[j];
-          if (j < fila.size() - 1)
-            archivoCalificacionesOut << ",";
-        }
-        archivoCalificacionesOut << "\n";
-      }
-      archivoCalificacionesOut.close();
-
-      mostrarTextoAnimado("Trabajo eliminado exitosamente!", 10);
-      esperar(1000);
-      break;
-    }
-    case 3: { // Modificar Trabajo
-      system("cls");
-      mostrarTextoAnimado("=== MODIFICAR TRABAJO ===", 14);
-
-      std::vector<std::string> trabajos;
-      std::ifstream archivoTrabajosIn("trabajos.txt");
-      std::string lineaTrabajos;
-      if (getline(archivoTrabajosIn, lineaTrabajos)) {
-        trabajos = split(lineaTrabajos, ',');
-        if (!trabajos.empty() && trabajos.back().empty()) {
-          trabajos.pop_back();
-        }
-      }
-      archivoTrabajosIn.close();
-
-      if (trabajos.empty()) {
-        mostrarTextoAnimado("No hay trabajos para modificar.", 14);
-        esperar(1000);
-        break;
-      }
-
-      mostrarTextoAnimado("\nSelecciona el trabajo a modificar:\n", 11);
-      for (size_t i = 0; i < trabajos.size(); ++i) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-        std::cout << i + 1 << ". ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cout << trabajos[i] << "\n";
-      }
-
-      int opcionTrabajoModificar;
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-      std::cout << "\nOpcion: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::cin >> opcionTrabajoModificar;
-      std::cin.ignore();
-      opcionTrabajoModificar--;
-
-      if (opcionTrabajoModificar < 0 ||
-          opcionTrabajoModificar >= trabajos.size()) {
-        mostrarTextoAnimado("Opcion invalida.", 12);
-        esperar(1000);
-        break;
-      }
-
-      std::string nuevoNombre;
-      std::string nuevaFecha;
-
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::cout << "\nIntroduce el nuevo nombre del trabajo: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::getline(std::cin, nuevoNombre);
-
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-      std::cout << "Introduce la nueva fecha (DD/MM/AAAA): ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-      std::getline(std::cin, nuevaFecha);
-
-      if (nuevoNombre.empty() || nuevaFecha.empty()) {
-        mostrarTextoAnimado("Datos invalidos.", 12);
-        esperar(1000);
-        break;
-      }
-
-      std::string trabajoModificado = nuevoNombre + " (" + nuevaFecha + ")";
-      trabajos[opcionTrabajoModificar] = trabajoModificado;
-
-      mostrarTextoAnimado("\nGuardando cambios...", 11);
-      mostrarBarraProgreso(1000);
-
-      std::ofstream archivoTrabajosOut("trabajos.txt");
-      if (!archivoTrabajosOut.is_open()) {
-        mostrarTextoAnimado("Error al guardar cambios.", 12);
-        esperar(1000);
-        break;
-      }
-
-      for (size_t i = 0; i < trabajos.size(); ++i) {
-        archivoTrabajosOut << trabajos[i];
-        if (i < trabajos.size() - 1)
-          archivoTrabajosOut << ",";
-      }
-      archivoTrabajosOut << ",";
-      archivoTrabajosOut.close();
-
-      mostrarTextoAnimado("Trabajo modificado exitosamente!", 10);
-      esperar(1000);
-      break;
-    }
     case 0:
       mostrarTextoAnimado("Regresando al Menu Principal...", 13);
       esperar(500);
@@ -1860,220 +1762,330 @@ void gestionarTrabajos() {
       esperar(1000);
       break;
     }
-  } while (opcionGestionTrabajos != 0);
-}
-
-void mostrarTablaCriterios() {
-    if (!existenCriteriosEvaluacion()) {
-        return;
-    }
-
-    std::ifstream archivoIn("criterios.txt");
-    std::string linea;
-    std::getline(archivoIn, linea);
-    archivoIn.close();
-
-    auto valores = split(linea, ',');
-    float valorAsistencias = std::stof(valores[0]);
-    float valorTrabajos = std::stof(valores[1]);
-    float valorExamen = std::stof(valores[2]);
-
-    // Dibujar tabla
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-    std::cout << "\n┌────────────────────┬──────────────┐\n";
-    std::cout << "│ Criterio          │ Porcentaje   │\n";
-    std::cout << "├────────────────────┼──────────────┤\n";
-    
-    // Asistencias
-    std::cout << "│ Asistencias       │ ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-    std::cout << std::right << std::setw(10) << valorAsistencias << "% ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-    std::cout << "│\n";
-    
-    // Trabajos
-    std::cout << "│ Trabajos          │ ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-    std::cout << std::right << std::setw(10) << valorTrabajos << "% ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-    std::cout << "│\n";
-    
-    // Examen
-    std::cout << "│ Examen            │ ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);
-    std::cout << std::right << std::setw(10) << valorExamen << "% ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-    std::cout << "│\n";
-    
-    std::cout << "└────────────────────┴──────────────┘\n\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-}
-
-void gestionarCriteriosEvaluacion() {
-    int opcion;
-    do {
-        system("cls");
-        mostrarTextoAnimado("=== GESTION DE CRITERIOS DE EVALUACION ===", 10);
-        esperar(500);
-
-        // Mostrar tabla de criterios si existen
-        mostrarTablaCriterios();
-
-        if (!existenCriteriosEvaluacion()) {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-            std::cout << "Selecciona una opcion:\n";
-            std::cout << "1. Agregar Criterios de Evaluacion\n";
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
-            std::cout << "0. Regresar al Menu Principal\n";
-        } else {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-            std::cout << "Selecciona una opcion:\n";
-            std::cout << "1. Modificar Criterios de Evaluacion\n";
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
-            std::cout << "0. Regresar al Menu Principal\n";
-        }
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-
-        std::cout << "\nSelecciona una opcion: ";
-        std::cin >> opcion;
-        std::cin.ignore();
-
-        switch (opcion) {
-            case 1:
-                if (!existenCriteriosEvaluacion()) {
-                    agregarCriteriosEvaluacion();
-                } else {
-                    modificarCriteriosEvaluacion();
-                }
-                break;
-            case 0:
-                mostrarTextoAnimado("Regresando al Menu Principal...", 13);
-                esperar(500);
-                break;
-            default:
-                mostrarTextoAnimado("Opcion invalida.", 12);
-                esperar(1000);
-                break;
-        }
-    } while (opcion != 0);
+  } while (opcion != 0);
 }
 
 void agregarCriteriosEvaluacion() {
+  system("cls");
+  mostrarTextoAnimado("=== AGREGAR CRITERIOS DE EVALUACION ===", 10);
+  esperar(500);
+
+  if (existenCriteriosEvaluacion()) {
+    mostrarTextoAnimado("Ya existen criterios de evaluación.", 12);
+    mostrarTextoAnimado("Use la opción de modificar para cambiar los valores.",
+                        12);
+    esperar(2000);
+    return;
+  }
+
+  float valorAsistencias, valorTrabajos, valorExamen;
+  bool valoresValidos = false;
+
+  do {
     system("cls");
     mostrarTextoAnimado("=== AGREGAR CRITERIOS DE EVALUACION ===", 10);
-    esperar(500);
+    mostrarTextoAnimado("\nIngrese los porcentajes (deben sumar 100%):", 11);
 
-    float valorAsistencias, valorTrabajos, valorExamen;
-    float total = 0;
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "\nPorcentaje para Asistencias (0-100): ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+    std::cin >> valorAsistencias;
 
-    do {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-        std::cout << "\nIngrese los porcentajes para cada criterio (debe sumar 100%):\n\n";
-        
-        std::cout << "Porcentaje para Asistencias (0-100): ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cin >> valorAsistencias;
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "Porcentaje para Trabajos (0-100): ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+    std::cin >> valorTrabajos;
 
-        std::cout << "\nPorcentaje para Trabajos (0-100): ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cin >> valorTrabajos;
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "Porcentaje para Examen (0-100): ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+    std::cin >> valorExamen;
 
-        std::cout << "\nPorcentaje para Examen (0-100): ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cin >> valorExamen;
-
-        total = valorAsistencias + valorTrabajos + valorExamen;
-
-        if (total != 100) {
-            mostrarTextoAnimado("\nError: Los porcentajes deben sumar 100%. Intente nuevamente.", 12);
-            esperar(1500);
-            system("cls");
-        }
-    } while (total != 100);
-
-    std::ofstream archivo("criterios.txt");
-    if (!archivo.is_open()) {
-        mostrarTextoAnimado("Error al guardar los criterios.", 12);
-        esperar(1000);
-        return;
+    float suma = valorAsistencias + valorTrabajos + valorExamen;
+    if (std::abs(suma - 100.0f) < 0.01f) {
+      valoresValidos = true;
+    } else {
+      mostrarTextoAnimado("\nLos porcentajes deben sumar 100%.", 12);
+      mostrarTextoAnimado("Suma actual: " + std::to_string(suma) + "%", 12);
+      esperar(2000);
     }
+  } while (!valoresValidos);
 
-    archivo << valorAsistencias << "," << valorTrabajos << "," << valorExamen;
-    archivo.close();
+  std::ofstream archivoCriterios("criterios.txt");
+  if (!archivoCriterios.is_open()) {
+    mostrarTextoAnimado("Error al guardar los criterios.", 12);
+    esperar(1000);
+    return;
+  }
 
-    mostrarTextoAnimado("\nCriterios de evaluación guardados exitosamente!", 10);
-    esperar(1500);
+  archivoCriterios << valorAsistencias << "," << valorTrabajos << ","
+                   << valorExamen;
+  archivoCriterios.close();
+
+  mostrarTextoAnimado("\n¡Criterios guardados correctamente!", 10);
+  esperar(1000);
 }
 
 void modificarCriteriosEvaluacion() {
-    system("cls");
-    mostrarTextoAnimado("=== MODIFICAR CRITERIOS DE EVALUACION ===", 14);
-    esperar(500);
+  system("cls");
+  mostrarTextoAnimado("=== MODIFICAR CRITERIOS DE EVALUACION ===", 10);
+  esperar(500);
 
-    std::ifstream archivoIn("criterios.txt");
-    if (!archivoIn.is_open()) {
-        mostrarTextoAnimado("Error al leer los criterios actuales.", 12);
-        esperar(1000);
+  if (!existenCriteriosEvaluacion()) {
+    mostrarTextoAnimado("No hay criterios de evaluacion para modificar.", 12);
+    mostrarTextoAnimado("Use la opcion de agregar para crear nuevos criterios.",
+                        12);
+    esperar(2000);
+    return;
+  }
+
+  std::ifstream archivoCriterios("criterios.txt");
+  if (!archivoCriterios.is_open()) {
+    mostrarTextoAnimado("Error al leer los criterios actuales.", 12);
+    esperar(1000);
+    return;
+  }
+
+  std::string linea;
+  getline(archivoCriterios, linea);
+  archivoCriterios.close();
+
+  auto valores = split(linea, ',');
+  float valorAsistencias = std::stof(valores[0]);
+  float valorTrabajos = std::stof(valores[1]);
+  float valorExamen = std::stof(valores[2]);
+
+  bool valoresValidos = false;
+  do {
+    system("cls");
+    mostrarTextoAnimado("=== MODIFICAR CRITERIOS DE EVALUACION ===", 10);
+    mostrarTextoAnimado("\nValores actuales:", 11);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "Asistencias: " << std::fixed << std::setprecision(1) << valorAsistencias << "%\n";
+    std::cout << "Trabajos: " << std::fixed << std::setprecision(1) << valorTrabajos << "%\n";
+    std::cout << "Examen: " << std::fixed << std::setprecision(1) << valorExamen << "%\n";
+
+    mostrarTextoAnimado("\nIngrese los nuevos porcentajes (deben sumar 100%):",
+                        11);
+
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "\nPorcentaje para Asistencias (0-100): ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+    std::cin >> valorAsistencias;
+
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "Porcentaje para Trabajos (0-100): ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+    std::cin >> valorTrabajos;
+
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+    std::cout << "Porcentaje para Examen (0-100): ";
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+    std::cin >> valorExamen;
+
+    float suma = valorAsistencias + valorTrabajos + valorExamen;
+    if (std::abs(suma - 100.0f) < 0.01f) { // La validacion sigue siendo que sumen 100%
+      valoresValidos = true;
+    } else {
+      mostrarTextoAnimado("\nLos porcentajes deben sumar 100%.", 12);
+      mostrarTextoAnimado("Suma actual: " + std::to_string(suma) + "%", 12); // Mantengo el string para mostrar la suma
+      esperar(2000);
+    }
+  } while (!valoresValidos);
+
+  std::ofstream archivoCriteriosOut("criterios.txt");
+  if (!archivoCriteriosOut.is_open()) {
+    mostrarTextoAnimado("Error al guardar los criterios.", 12);
+    esperar(1000);
+    return;
+  }
+
+  archivoCriteriosOut << valorAsistencias << "," << valorTrabajos << ","
+                      << valorExamen;
+  archivoCriteriosOut.close();
+
+  mostrarTextoAnimado("\n¡Criterios actualizados correctamente!", 10);
+  esperar(1000);
+}
+
+bool existenCriteriosEvaluacion() {
+  std::ifstream archivoCriterios("criterios.txt");
+  if (!archivoCriterios.is_open()) {
+    mostrarTextoAnimado("Error al leer los criterios.", 12);
+    esperar(1000);
+    return false;
+  }
+
+  std::string linea;
+  getline(archivoCriterios, linea);
+  archivoCriterios.close();
+
+  auto valores = split(linea, ',');
+  if (valores.size() == 3) {
+    try {
+      std::stof(valores[0]);
+      std::stof(valores[1]);
+      std::stof(valores[2]);
+      return true;
+    } catch (...) {
+      mostrarTextoAnimado("Error al leer los criterios.", 12);
+      esperar(1000);
+      return false;
+    }
+  } else {
+    mostrarTextoAnimado("Formato incorrecto en criterios.txt.", 12);
+    esperar(1000);
+    return false;
+  }
+}
+
+void mostrar() {
+  std::ifstream archivoCriterios("criterios.txt");
+  if (!archivoCriterios.is_open()) {
+    mostrarTextoAnimado("Error al leer los criterios.", 12);
+    esperar(1000);
+    return;
+  }
+
+  std::string linea;
+  getline(archivoCriterios, linea);
+  archivoCriterios.close();
+
+  auto valores = split(linea, ',');
+  if (valores.size() == 3) {
+    try {
+      float valorAsistencias = std::stof(valores[0]);
+      float valorTrabajos = std::stof(valores[1]);
+      float valorExamen = std::stof(valores[2]);
+
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+      std::cout << "Asistencias: " << valorAsistencias << "%\n";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+      std::cout << "Trabajos: " << valorTrabajos << "%\n";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
+      std::cout << "Examen: " << valorExamen << "%\n";
+    } catch (...) {
+      mostrarTextoAnimado("Error al mostrar los criterios.", 12);
+      esperar(1000);
+    }
+  } else {
+    mostrarTextoAnimado("Formato incorrecto en criterios.txt.", 12);
+    esperar(1000);
+  }
+}
+
+// Funciones de utilidad para manejo de archivos
+bool archivoExiste(const std::string& nombreArchivo) {
+    std::ifstream archivo(nombreArchivo);
+    return archivo.good();
+}
+
+bool eliminarArchivo(const std::string& nombreArchivo) {
+    if (archivoExiste(nombreArchivo)) {
+        return remove(nombreArchivo.c_str()) == 0;
+    }
+    return true;
+}
+
+bool renombrarArchivo(const std::string& viejoNombre, const std::string& nuevoNombre) {
+    if (!archivoExiste(viejoNombre)) {
+        return false;
+    }
+    if (archivoExiste(nuevoNombre)) {
+        if (!eliminarArchivo(nuevoNombre)) {
+            return false;
+        }
+    }
+    return rename(viejoNombre.c_str(), nuevoNombre.c_str()) == 0;
+}
+
+// Función para validar formato de fecha
+bool validarFormatoFecha(const std::string& fecha) {
+    if (fecha.empty()) return true; // Permitir fechas vacías
+    
+    // Formato esperado: DD/MM/AAAA
+    if (fecha.length() != 10) return false;
+    if (fecha[2] != '/' || fecha[5] != '/') return false;
+    
+    try {
+        int dia = std::stoi(fecha.substr(0, 2));
+        int mes = std::stoi(fecha.substr(3, 2));
+        int anio = std::stoi(fecha.substr(6, 4));
+        
+        if (dia < 1 || dia > 31) return false;
+        if (mes < 1 || mes > 12) return false;
+        if (anio < 2000 || anio > 2100) return false;
+        
+        // Validaciones adicionales según el mes
+        if ((mes == 4 || mes == 6 || mes == 9 || mes == 11) && dia > 30) return false;
+        if (mes == 2) {
+            bool esBisiesto = (anio % 4 == 0 && anio % 100 != 0) || (anio % 400 == 0);
+            if ((esBisiesto && dia > 29) || (!esBisiesto && dia > 28)) return false;
+        }
+        
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+// Función para validar entrada numérica
+bool validarEntradaNumerica(const std::string& entrada, float& valor, float min, float max) {
+    try {
+        valor = std::stof(entrada);
+        return valor >= min && valor <= max;
+    } catch (...) {
+        return false;
+    }
+}
+
+void gen() {
+    std::ifstream archivo("alumnos.txt");
+    if (!archivo.is_open()) {
+        mostrarTextoAnimado("Error al abrir el archivo de alumnos", 12);
+        return;
+    }
+
+    std::ofstream temp("temp.txt");
+    if (!temp.is_open()) {
+        mostrarTextoAnimado("Error al crear archivo temporal", 12);
+        archivo.close();
         return;
     }
 
     std::string linea;
-    std::getline(archivoIn, linea);
-    archivoIn.close();
-
-    auto valores = split(linea, ',');
-    float valorAsistencias = std::stof(valores[0]);
-    float valorTrabajos = std::stof(valores[1]);
-    float valorExamen = std::stof(valores[2]);
-
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-    std::cout << "\nCriterios actuales:\n";
-    std::cout << "Asistencias: " << valorAsistencias << "%\n";
-    std::cout << "Trabajos: " << valorTrabajos << "%\n";
-    std::cout << "Examen: " << valorExamen << "%\n\n";
-
-    float total = 0;
-    do {
-        std::cout << "Ingrese los nuevos porcentajes (debe sumar 100%):\n\n";
-        
-        std::cout << "Nuevo porcentaje para Asistencias (0-100): ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cin >> valorAsistencias;
-
-        std::cout << "\nNuevo porcentaje para Trabajos (0-100): ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cin >> valorTrabajos;
-
-        std::cout << "\nNuevo porcentaje para Examen (0-100): ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        std::cin >> valorExamen;
-
-        total = valorAsistencias + valorTrabajos + valorExamen;
-
-        if (total != 100) {
-            mostrarTextoAnimado("\nError: Los porcentajes deben sumar 100%. Intente nuevamente.", 12);
-            esperar(1500);
-            system("cls");
+    bool error = false;
+    while (std::getline(archivo, linea)) {
+        if (!linea.empty()) {
+            temp << linea << std::endl;
         }
-    } while (total != 100);
+    }
 
-    std::ofstream archivoOut("criterios.txt");
-    if (!archivoOut.is_open()) {
-        mostrarTextoAnimado("Error al guardar los criterios.", 12);
-        esperar(1000);
+    archivo.close();
+    temp.close();
+
+    if (error) {
+        mostrarTextoAnimado("Error al procesar el archivo", 12);
+        eliminarArchivo("temp.txt");
         return;
     }
 
-    archivoOut << valorAsistencias << "," << valorTrabajos << "," << valorExamen;
-    archivoOut.close();
+    if (!renombrarArchivo("temp.txt", "alumnos.txt")) {
+        mostrarTextoAnimado("Error al actualizar el archivo", 12);
+        eliminarArchivo("temp.txt");
+        return;
+    }
 
-    mostrarTextoAnimado("\nCriterios de evaluación actualizados exitosamente!", 10);
-    esperar(1500);
+    mostrarTextoAnimado("Archivo actualizado correctamente", 10);
 }
 
-bool existenCriteriosEvaluacion() {
-    std::ifstream archivo("criterios.txt");
-    return archivo.good();
+// Función para animar texto
+void animarTexto(const std::string& texto, int velocidad) {
+    for (char c : texto) {
+        std::cout << c << std::flush;
+        std::this_thread::sleep_for(std::chrono::milliseconds(velocidad));
+    }
+    std::cout << std::endl;
 }
 
 int main() {
@@ -2084,17 +2096,16 @@ int main() {
     mostrarMenu();
     std::cout << "\nSelecciona una opcion: ";
     std::cin >> opcion;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     switch (opcion) {
     case 1:
       mostrarCuadriculaAsistencias();
       break;
     case 2:
-      modificarAsistencias();
+      mostrarCuadriculaTrabajos();
       break;
     case 3:
-      mostrarCuadriculaTrabajos();
+      modificarAsistencias(); // Corregido de 'mos()' a 'modificarAsistencias()'
       break;
     case 4:
       modificarTrabajos();
@@ -2114,6 +2125,18 @@ int main() {
     case 9:
       gestionarCriteriosEvaluacion();
       break;
+    case 10:
+      modificarCalificacionAlumno();
+      break;
+    case 11:
+      modificarAsistencias(); // Corresponde a Modificar Asistencia de Alumno
+      break;
+    case 12:
+      calcularPromedioParcial();
+      break;
+    case 13:
+      calcularPromedioSemestre();
+      break;
     case 0:
       mostrarTextoAnimado("Saliendo del sistema...", 13);
       esperar(1000);
@@ -2126,4 +2149,6 @@ int main() {
   } while (opcion != 0);
 
   return 0;
+  
 }
+
