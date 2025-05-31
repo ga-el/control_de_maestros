@@ -102,7 +102,7 @@ void mostrarMenu() {
   cout << "11. Modificar Asistencia de Alumno\n\n";
 
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-                          14); // Amarillo - Promedios en consultas
+                          14); // Amarillo 
   cout << "=== PROMEDIOS ===\n";
   cout << "12. Calcular Promedio Parcial\n";
   cout << "13. Calcular Promedio Semestre\n\n";
@@ -196,7 +196,7 @@ void mostrarCuadriculaAsistencias() {
     }
     cout << "\n";
 
-    // Fila 1: "Nombre" y Fechas
+    // Fila 1: Nombre y Fechas
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     cout << "|";
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
@@ -2350,7 +2350,7 @@ int main() {
       mostrarCuadriculaTrabajos();
       break;
     case 3:
-      modificarAsistencias(); // Corregido de 'mos()' a 'modificarAsistencias()'
+      modificarAsistencias(); 
       break;
     case 4:
       modificarTrabajos();
