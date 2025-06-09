@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Descarga DocenteZ</title>
+  <style>
+    /* Paleta de rosas */
+    :root {
+      --rosa-fuerte: #ff007f;
+      --rosa-suave: #ffb6c1;
+      --rosa-oscuro: #c2185b;
+      --blanco: #fff;
+      --gris: #1e1e1e;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, var(--gris), var(--rosa-oscuro));
+      color: var(--blanco);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 3em;
+      color: var(--rosa-suave);
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 10px var(--rosa-fuerte);
+    }
+
+    p {
+      font-size: 1.2em;
+      max-width: 600px;
+      margin-bottom: 30px;
+      color: #ddd;
+    }
+
+    .boton-descarga {
+      background-color: var(--rosa-fuerte);
+      color: var(--blanco);
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.1em;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 0 15px var(--rosa-fuerte);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .boton-descarga:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px var(--rosa-suave);
+      background-color: var(--rosa-oscuro);
+    }
+
+    footer {
+      position: fixed;
+      bottom: 10px;
+      font-size: 0.9em;
+      color: #aaa;
+    }
+
+    @keyframes aparecer {
+      0% { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .animado {
+      animation: aparecer 1s ease forwards;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="animado">¡Descarga el Programa Más placoso para DocenteZ!</h1>
+  <p class="animado" style="animation-delay: 0.2s">
+    ¿Listo para revolucionar tus clases? DocenteZ te ayuda a organizar tus clases de forma sencilla y eficiente. ¡Únete a la nueva era de la enseñanza!
+  </p>
+    <a class="boton-descarga animado" style="animation-delay: 0.4s" href="/DocenteZ.zip" download>📦 Descargar programa</a>
+
+  <footer>Hecho por 2F CBtis224 | 2025</footer>
+
+  <script>
+    // Añadir retraso a animaciones
+    const elementos = document.querySelectorAll('.animado');
+    elementos.forEach((el, i) => {
+      el.style.opacity = 0;
+      el.style.animationDelay = `${i * 0.3}s`;
+    });
+  </script>
+</body>
+</html>
