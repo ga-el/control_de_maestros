@@ -15,32 +15,45 @@
       --gris: #1e1e1e;
     }
 
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, var(--gris), var(--rosa-oscuro));
       color: var(--blanco);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      text-align: center;
-      padding: 20px;
-      box-sizing: border-box;
     }
 
-    h1 {
-      font-size: 2.5em;
+    h1, h2 {
+      margin: 0;
+    }
+
+    /* Sección de descarga del sistema (pantalla completa) */
+    .seccion-descarga {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 20px;
+      text-align: center;
+      animation: aparecer 1s ease forwards;
+      opacity: 0;
+    }
+
+    .seccion-descarga h1 {
+      font-size: 2.8em;
       color: var(--rosa-suave);
       margin-bottom: 10px;
       text-shadow: 2px 2px 10px var(--rosa-fuerte);
       padding: 0 15px;
     }
 
-    p {
-      font-size: 1.1em;
-      max-width: 600px;
+    .seccion-descarga p {
+      font-size: 1.2em;
+      max-width: 700px;
       margin-bottom: 30px;
       color: #ddd;
       padding: 0 20px;
@@ -68,14 +81,71 @@
       background-color: var(--rosa-oscuro);
     }
 
+    /* Sección del manual de usuario */
+    .manual-usuario {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border-top: 2px solid var(--rosa-fuerte);
+      border-bottom: 2px solid var(--rosa-fuerte);
+      padding: 60px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: aparecer 1.5s ease forwards;
+      opacity: 0;
+    }
+
+    .manual-contenido {
+      max-width: 700px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--rosa-suave);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 0 20px rgba(255, 182, 193, 0.3);
+      text-align: center;
+    }
+
+    .manual-contenido h2 {
+      font-size: 2em;
+      color: var(--blanco);
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 5px var(--rosa-fuerte);
+    }
+
+    .manual-contenido p {
+      font-size: 1.05em;
+      color: #eee;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .boton-manual {
+      background-color: var(--rosa-suave);
+      color: var(--gris);
+      border: none;
+      padding: 12px 28px;
+      font-size: 1em;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 0 10px var(--rosa-suave);
+    }
+
+    .boton-manual:hover {
+      background-color: var(--rosa-fuerte);
+      color: var(--blanco);
+      box-shadow: 0 0 20px var(--rosa-fuerte);
+      transform: scale(1.05);
+    }
+
     footer {
-      position: fixed;
-      bottom: 10px;
       font-size: 0.9em;
       color: #aaa;
       width: 100%;
       text-align: center;
-      padding: 10px 0;
+      padding: 20px 10px;
     }
 
     @keyframes aparecer {
@@ -87,16 +157,14 @@
       animation: aparecer 1s ease forwards;
     }
 
-    /* Media queries para dispositivos móviles */
+    /* Responsive para móviles */
     @media screen and (max-width: 480px) {
-      h1 {
-        font-size: 1.8em;
-        padding: 0 10px;
+      .seccion-descarga h1 {
+        font-size: 2em;
       }
 
-      p {
+      .seccion-descarga p {
         font-size: 1em;
-        padding: 0 15px;
       }
 
       .boton-descarga {
@@ -105,40 +173,62 @@
         margin: 0 10px;
       }
 
+      .manual-contenido {
+        padding: 25px 20px;
+      }
+
+      .manual-contenido h2 {
+        font-size: 1.6em;
+      }
+
+      .manual-contenido p {
+        font-size: 1em;
+      }
+
+      .boton-manual {
+        padding: 10px 22px;
+        font-size: 0.95em;
+      }
+
       footer {
         font-size: 0.8em;
-        padding: 5px 0;
-      }
-    }
-
-    /* Media query para tablets */
-    @media screen and (min-width: 481px) and (max-width: 768px) {
-      h1 {
-        font-size: 2em;
-      }
-
-      p {
-        font-size: 1.05em;
       }
     }
   </style>
 </head>
 <body>
-  <h1 class="animado">¡Descarga el Programa Más placoso para DocenteZ!</h1>
-  <p class="animado" style="animation-delay: 0.2s">
-    ¿Listo para revolucionar tus clases? DocenteZ te ayuda a organizar tus clases de forma sencilla y eficiente. ¡Únete a la nueva era de la enseñanza!
-  </p>
-    <a class="boton-descarga animado" style="animation-delay: 0.4s" href="/DocenteZ .zip" download>📦 Descargar programa</a>
 
+  <!-- Sección principal: descarga del sistema -->
+  <section class="seccion-descarga animado">
+    <h1>¡Descarga el Programa Más placoso para DocenteZ!</h1>
+    <p>
+      ¿Listo para revolucionar tus clases? DocenteZ te ayuda a organizar tus clases de forma sencilla y eficiente. ¡Únete a la nueva era de la enseñanza!
+    </p>
+    <a class="boton-descarga" href="/DocenteZ.zip" download>Descargar programa</a>
+  </section>
+
+  <!-- Sección del manual -->
+  <section class="manual-usuario">
+    <div class="manual-contenido animado">
+      <h2>Manual de Usuario</h2>
+      <p>
+        Aprende a usar DocenteZ paso a paso con nuestro manual completo. Contiene instrucciones claras, ejemplos visuales y todo lo necesario para aprovechar al máximo el sistema.
+      </p>
+      <a class="boton-manual" href="/ManualDocenteZ.pdf" download>Descargar Manual DOC</a>
+    </div>
+  </section>
+
+  <!-- Pie de página -->
   <footer>Hecho por 2F CBtis224 | 2025</footer>
 
   <script>
-    // Añadir retraso a animaciones
+    // Aplicar retraso progresivo a animaciones
     const elementos = document.querySelectorAll('.animado');
     elementos.forEach((el, i) => {
       el.style.opacity = 0;
       el.style.animationDelay = `${i * 0.3}s`;
     });
   </script>
+
 </body>
 </html>
