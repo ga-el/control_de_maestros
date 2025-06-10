@@ -55,7 +55,8 @@ bool renombrarArchivo(const string &viejoNombre, const string &nuevoNombre);
 void eliminarTrabajo();
 void inicializarArchivos();
 void registrarTrabajos();
-void animacionSalida(const std::string& nombreSeccion, bool esSalidaSistema = false, int color = 11);
+void animacionSalida(const std::string &nombreSeccion,
+                     bool esSalidaSistema = false, int color = 11);
 void calcularPromedioFinal();
 
 // Agregar después de las declaraciones de funciones existentes
@@ -189,7 +190,8 @@ void mostrarCuadriculaAsistencias(bool animacionRapida) {
     }
   }
   // Ajustar el ancho para que sea múltiplo de 4 y mínimo 30
-  const int ANCHO_NOMBRE = max(30, static_cast<int>((maxAnchoNombre + 3) / 4 * 4 + 2));
+  const int ANCHO_NOMBRE =
+      max(30, static_cast<int>((maxAnchoNombre + 3) / 4 * 4 + 2));
   const int ANCHO_COLUMNA_DATOS = 15;
 
   // Calcular cuántas columnas caben en la pantalla
@@ -271,10 +273,13 @@ void mostrarCuadriculaAsistencias(bool animacionRapida) {
       cout << "|";
 
       // Imprimir todos los valores de asistencia en una sola línea
-      for (int j = 0; j < min(columnasVisibles, static_cast<int>(fechas.size()) - inicioColumnas); ++j) {
+      for (int j = 0; j < min(columnasVisibles,
+                              static_cast<int>(fechas.size()) - inicioColumnas);
+           ++j) {
         string valor = " ";
         int colorValor = 15;
-        if (i < asistencias.size() && inicioColumnas + j < asistencias[i].size()) {
+        if (i < asistencias.size() &&
+            inicioColumnas + j < asistencias[i].size()) {
           valor = asistencias[i][inicioColumnas + j];
           colorValor = (valor == "1") ? 10 : 12;
           valor = (valor == "1") ? "S" : "N";
@@ -282,11 +287,13 @@ void mostrarCuadriculaAsistencias(bool animacionRapida) {
         int padding = ANCHO_COLUMNA_DATOS - valor.length();
         int pl = padding / 2, pr = padding - pl;
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        for (int k = 0; k < pl; ++k) cout << " ";
+        for (int k = 0; k < pl; ++k)
+          cout << " ";
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colorValor);
         cout << valor;
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        for (int k = 0; k < pr; ++k) cout << " ";
+        for (int k = 0; k < pr; ++k)
+          cout << " ";
         cout << "|";
       }
       cout << "\n";
@@ -317,11 +324,13 @@ void mostrarCuadriculaAsistencias(bool animacionRapida) {
     if (tecla == 224) { // Tecla especial (flechas)
       int flecha = _getch();
       if (flecha == 75) { // Izquierda
-        if (inicioColumnas > 0) inicioColumnas--;
+        if (inicioColumnas > 0)
+          inicioColumnas--;
         // Animación rápida al navegar
         animacionRapida = true;
       } else if (flecha == 77) { // Derecha
-        if (inicioColumnas + columnasVisibles < fechas.size()) inicioColumnas++;
+        if (inicioColumnas + columnasVisibles < fechas.size())
+          inicioColumnas++;
         // Animación rápida al navegar
         animacionRapida = true;
       }
@@ -411,20 +420,24 @@ void modificarAsistencias() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9); // Azul neón
   cout << "\nSeleccione la fecha:\n\n";
   for (size_t i = 0; i < fechas.size(); ++i) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << i + 1 << ". ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << fechas[i] << "\n";
   }
 
   float seleccionFecha;
   string entrada;
   do {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << "\nIngrese el numero de la fecha (o 0 para regresar): ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     getline(cin, entrada);
-    
+
     if (!validarEntradaNumerica(entrada, seleccionFecha, 0, fechas.size())) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
       mostrarTextoAnimado("Seleccion invalida. Intente de nuevo.", 12);
@@ -457,20 +470,24 @@ void modificarAsistencias() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   mostrarTextoAnimado("=== REGISTRO DE ASISTENCIAS ===", 13);
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9); // Azul neón
-  mostrarTextoAnimado("Fecha: " + fechas[static_cast<int>(seleccionFecha) - 1], 9);
+  mostrarTextoAnimado("Fecha: " + fechas[static_cast<int>(seleccionFecha) - 1],
+                      9);
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 
   for (size_t i = 0; i < alumnos.size(); ++i) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << "\n" << alumnos[i] << "\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "Asistencia (1 = Presente, 0 = Ausente): ";
 
     float asistencia;
     do {
       getline(cin, entrada);
       if (!validarEntradaNumerica(entrada, asistencia, 0, 1)) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                12); // Rojo neón
         mostrarTextoAnimado("Valor invalido. Debe ser 0 o 1.", 12);
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
         cout << "Asistencia (1 = Presente, 0 = Ausente): ";
@@ -488,7 +505,8 @@ void modificarAsistencias() {
       asistencias[i].resize(columnasNecesarias, "0");
     }
     // Registrar la asistencia
-    asistencias[i][static_cast<int>(seleccionFecha) - 1] = to_string(static_cast<int>(asistencia));
+    asistencias[i][static_cast<int>(seleccionFecha) - 1] =
+        to_string(static_cast<int>(asistencia));
   }
 
   ofstream archivoAsistenciasOut("asistencias.txt");
@@ -518,14 +536,15 @@ void modificarAsistencias() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
   cout << "\n==============================================\n";
   cout << "||   ";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "Presiona ENTER para regresar al menú principal...";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   cout << "   ||\n";
   cout << "==============================================\n";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
   cin.sync(); // Limpia el buffer de entrada
-  cin.get(); // Espera solo un ENTER
+  cin.get();  // Espera solo un ENTER
 }
 
 void gestionarFechas() {
@@ -552,12 +571,15 @@ void gestionarFechas() {
   }
   archivoFechas.close();
 
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "\nFechas actuales:\n";
   for (size_t i = 0; i < fechas.size(); ++i) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << "  - ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << fechas[i] << "\n";
     esperar(100);
   }
@@ -566,23 +588,28 @@ void gestionarFechas() {
   cout << "\nOpciones:\n";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   cout << "  1. ";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "Agregar fecha\n";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   cout << "  2. ";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "Eliminar fecha\n";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   cout << "  0. ";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "Volver al menu principal\n\n";
 
   float opcion;
   string entrada;
   do {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << "Seleccione una opción: ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     getline(cin, entrada);
     if (!validarEntradaNumerica(entrada, opcion, 0, 2)) {
       mostrarTextoAnimado("Opcion invalida. Intente de nuevo.", 12);
@@ -599,15 +626,18 @@ void gestionarFechas() {
 
   switch (static_cast<int>(opcion)) {
   case 1: {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     mostrarTextoAnimado("=== AGREGAR FECHA ===", 13);
     esperar(500);
 
     string nuevaFecha;
     do {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              13); // Magenta neón
       cout << "\nIngrese la nueva fecha (DD/MM/AAAA): ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       getline(cin, nuevaFecha);
       if (!validarFormatoFecha(nuevaFecha)) {
         mostrarTextoAnimado("Formato de fecha invalido. Use DD/MM/AAAA.", 12);
@@ -636,21 +666,26 @@ void gestionarFechas() {
     esperar(500);
 
     // Mostrar fechas disponibles con marco ASCII simple
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
     cout << "+-----------------------------+\n";
     cout << "|     FECHAS DISPONIBLES      |\n";
     cout << "+-----------------------------+\n";
     for (size_t i = 0; i < fechas.size(); ++i) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              14); // Amarillo neón
       cout << "| ";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
       cout << i + 1 << ". ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << fechas[i];
       // Rellenar espacios para alinear
       int espacios = 24 - fechas[i].length();
-      for(int j = 0; j < espacios; j++) cout << " ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+      for (int j = 0; j < espacios; j++)
+        cout << " ";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              14); // Amarillo neón
       cout << "|\n";
       esperar(100);
     }
@@ -659,8 +694,10 @@ void gestionarFechas() {
     float indice;
     do {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
-      cout << "Ingrese el numero de la fecha a eliminar (1-" << fechas.size() << "): ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      cout << "Ingrese el numero de la fecha a eliminar (1-" << fechas.size()
+           << "): ";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       getline(cin, entrada);
       if (!validarEntradaNumerica(entrada, indice, 1, fechas.size())) {
         mostrarTextoAnimado("Seleccion invalida. Intente de nuevo.", 12);
@@ -674,23 +711,27 @@ void gestionarFechas() {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
     mostrarTextoAnimado("=== CONFIRMAR ELIMINACIÓN ===", 12);
     esperar(500);
-    
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
     cout << "\n¿Está seguro que desea eliminar la fecha: ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << fechas[static_cast<int>(indice) - 1];
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
     cout << "?\n";
-    
+
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
     cout << "\n1. Sí, eliminar\n";
     cout << "2. No, cancelar\n\n";
-    
+
     float confirmacion;
     do {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
       cout << "Seleccione una opción: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       getline(cin, entrada);
       if (!validarEntradaNumerica(entrada, confirmacion, 1, 2)) {
         mostrarTextoAnimado("Opción inválida. Intente de nuevo.", 12);
@@ -701,11 +742,13 @@ void gestionarFechas() {
 
     if (static_cast<int>(confirmacion) == 1) {
       fechas.erase(fechas.begin() + static_cast<int>(indice) - 1);
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              10); // Verde neón
       mostrarTextoAnimado("Fecha eliminada correctamente.", 10);
       esperar(1000);
     } else {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              14); // Amarillo neón
       mostrarTextoAnimado("Operación cancelada.", 14);
       esperar(1000);
     }
@@ -718,7 +761,8 @@ void gestionarFechas() {
 
   ofstream archivoFechasOut("fechas.txt");
   if (!archivoFechasOut.is_open()) {
-    mostrarTextoAnimado("Error al abrir el archivo de fechas para escritura.", 12);
+    mostrarTextoAnimado("Error al abrir el archivo de fechas para escritura.",
+                        12);
     esperar(1000);
     animacionSalida("fechas", false, 9);
     return;
@@ -737,8 +781,9 @@ void gestionarFechas() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9); // Azul neón
   mostrarTextoAnimado("Guardando cambios", 9);
   cout << "\n";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
-  for(int i = 0; i < 3; i++) {
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
+  for (int i = 0; i < 3; i++) {
     cout << ".";
     cout.flush();
     esperar(300);
@@ -900,7 +945,8 @@ void agregarAlumno() {
   ofstream archivoAlumnosOut("alumnos.txt");
   if (!archivoAlumnosOut.is_open()) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
-    mostrarTextoAnimado("Error al abrir el archivo de alumnos para escritura.", 12);
+    mostrarTextoAnimado("Error al abrir el archivo de alumnos para escritura.",
+                        12);
     esperar(1000);
     animacionSalida("alumnos", false, 14);
     return;
@@ -1047,7 +1093,7 @@ void mostrarCuadriculaTrabajos() {
 
   // Calcular el ancho máximo del nombre
   size_t maxAnchoNombre = 0;
-  for (const auto& alumno : alumnos) {
+  for (const auto &alumno : alumnos) {
     if (alumno.length() > maxAnchoNombre) {
       maxAnchoNombre = alumno.length();
     }
@@ -1059,23 +1105,29 @@ void mostrarCuadriculaTrabajos() {
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
   int anchoPantalla = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-  int columnasVisibles = (anchoPantalla - ANCHO_NOMBRE - 2) / (ANCHO_COLUMNA_DATOS + 1);
+  int columnasVisibles =
+      (anchoPantalla - ANCHO_NOMBRE - 2) / (ANCHO_COLUMNA_DATOS + 1);
 
   int inicioColumnas = 0;
   bool salir = false;
 
   while (!salir) {
-      system("cls");
-      mostrarTextoAnimado("=== LISTA DE TRABAJOS ===", 14);
-      esperar(300);
+    system("cls");
+    mostrarTextoAnimado("=== LISTA DE TRABAJOS ===", 14);
+    esperar(300);
 
     // Dibujar encabezado superior
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i) cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i)
+      cout << "-";
     cout << "+";
-    for (int i = 0; i < min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
-      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) cout << "-";
+    for (int i = 0;
+         i < min(columnasVisibles,
+                 static_cast<int>(trabajosConFecha.size()) - inicioColumnas);
+         ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j)
+        cout << "-";
       cout << "+";
     }
     cout << "\n";
@@ -1087,14 +1139,19 @@ void mostrarCuadriculaTrabajos() {
     cout << left << setw(ANCHO_NOMBRE) << "Nombre";
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     cout << "|";
-    for (int i = 0; i < min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
+    for (int i = 0;
+         i < min(columnasVisibles,
+                 static_cast<int>(trabajosConFecha.size()) - inicioColumnas);
+         ++i) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
       string nombre = trabajosConFecha[inicioColumnas + i].first;
       int padding = ANCHO_COLUMNA_DATOS - nombre.length();
       int pl = padding / 2, pr = padding - pl;
-      for (int k = 0; k < pl; ++k) cout << " ";
+      for (int k = 0; k < pl; ++k)
+        cout << " ";
       cout << nombre;
-      for (int k = 0; k < pr; ++k) cout << " ";
+      for (int k = 0; k < pr; ++k)
+        cout << " ";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       cout << "|";
     }
@@ -1103,16 +1160,22 @@ void mostrarCuadriculaTrabajos() {
     // Dibujar fila de fechas de trabajos
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     cout << "|";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i) cout << " ";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i)
+      cout << " ";
     cout << "|";
-    for (int i = 0; i < min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
+    for (int i = 0;
+         i < min(columnasVisibles,
+                 static_cast<int>(trabajosConFecha.size()) - inicioColumnas);
+         ++i) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
       string fecha = trabajosConFecha[inicioColumnas + i].second;
       int padding = ANCHO_COLUMNA_DATOS - fecha.length();
       int pl = padding / 2, pr = padding - pl;
-      for (int k = 0; k < pl; ++k) cout << " ";
+      for (int k = 0; k < pl; ++k)
+        cout << " ";
       cout << fecha;
-      for (int k = 0; k < pr; ++k) cout << " ";
+      for (int k = 0; k < pr; ++k)
+        cout << " ";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       cout << "|";
     }
@@ -1121,10 +1184,15 @@ void mostrarCuadriculaTrabajos() {
     // Dibujar línea divisoria entre encabezado y datos
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i) cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i)
+      cout << "-";
     cout << "+";
-    for (int i = 0; i < min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
-      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) cout << "-";
+    for (int i = 0;
+         i < min(columnasVisibles,
+                 static_cast<int>(trabajosConFecha.size()) - inicioColumnas);
+         ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j)
+        cout << "-";
       cout << "+";
     }
     cout << "\n";
@@ -1138,34 +1206,47 @@ void mostrarCuadriculaTrabajos() {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
       cout << "|";
 
-      for (int j = 0; j < min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++j) {
+      for (int j = 0;
+           j < min(columnasVisibles,
+                   static_cast<int>(trabajosConFecha.size()) - inicioColumnas);
+           ++j) {
         string valor = "0";
         int colorValor = 15;
-        if (i < calificaciones.size() && inicioColumnas + j < calificaciones[i].size()) {
+        if (i < calificaciones.size() &&
+            inicioColumnas + j < calificaciones[i].size()) {
           valor = calificaciones[i][inicioColumnas + j];
-          if (valor.empty()) valor = "0";
+          if (valor.empty())
+            valor = "0";
           try {
             float calif = stof(valor);
-            if (calif == 0.0f) colorValor = 12; // Rojo para ceros
+            // Formatear a un decimal
+            stringstream ss;
+            ss << fixed << setprecision(1) << calif;
+            valor = ss.str();
+            if (calif == 0.0f)
+              colorValor = 12; // Rojo para ceros
             else if (calif >= 6.0)
               colorValor = 10; // Verde
             else
               colorValor = 12; // Rojo
           } catch (...) {
-            valor = "0";
+            valor = "0.0";
             colorValor = 12;
           }
         } else {
+          valor = "0.0";
           colorValor = 12; // Rojo para ceros por defecto
         }
         int padding = ANCHO_COLUMNA_DATOS - valor.length();
         int pl = padding / 2, pr = padding - pl;
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        for (int k = 0; k < pl; ++k) cout << " ";
+        for (int k = 0; k < pl; ++k)
+          cout << " ";
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colorValor);
         cout << valor;
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-        for (int k = 0; k < pr; ++k) cout << " ";
+        for (int k = 0; k < pr; ++k)
+          cout << " ";
         cout << "|";
       }
       cout << "\n";
@@ -1174,10 +1255,15 @@ void mostrarCuadriculaTrabajos() {
     // Dibujar línea inferior
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     cout << "+";
-    for (int i = 0; i < ANCHO_NOMBRE; ++i) cout << "-";
+    for (int i = 0; i < ANCHO_NOMBRE; ++i)
+      cout << "-";
     cout << "+";
-    for (int i = 0; i < min(columnasVisibles, static_cast<int>(trabajosConFecha.size()) - inicioColumnas); ++i) {
-      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j) cout << "-";
+    for (int i = 0;
+         i < min(columnasVisibles,
+                 static_cast<int>(trabajosConFecha.size()) - inicioColumnas);
+         ++i) {
+      for (int j = 0; j < ANCHO_COLUMNA_DATOS; ++j)
+        cout << "-";
       cout << "+";
     }
     cout << "\n";
@@ -1193,7 +1279,8 @@ void mostrarCuadriculaTrabajos() {
       tecla = _getch();
       if (tecla == 75 && inicioColumnas > 0) { // Flecha izquierda
         inicioColumnas--;
-      } else if (tecla == 77 && inicioColumnas + columnasVisibles < trabajosConFecha.size()) { // Flecha derecha
+      } else if (tecla == 77 && inicioColumnas + columnasVisibles <
+                                    trabajosConFecha.size()) { // Flecha derecha
         inicioColumnas++;
       }
     } else if (tecla == 13) { // ENTER
@@ -1237,7 +1324,9 @@ void calcularPromedioParcial() {
   }
   if (!archivoCriterios.is_open()) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo
-    mostrarTextoAnimado("Error al abrir el archivo de criterios de evaluacion. Asegurate de haberlos configurado.", 14);
+    mostrarTextoAnimado("Error al abrir el archivo de criterios de evaluacion. "
+                        "Asegurate de haberlos configurado.",
+                        14);
     esperar(1500);
     animacionSalida("promedios", false, 11);
     return;
@@ -1276,7 +1365,8 @@ void calcularPromedioParcial() {
         pesoExamen = stof(criterios[2]);
       } catch (...) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-        mostrarTextoAnimado("Error al leer los pesos de los criterios de evaluacion.", 12);
+        mostrarTextoAnimado(
+            "Error al leer los pesos de los criterios de evaluacion.", 12);
         esperar(1000);
         animacionSalida("promedios", false, 11);
         return;
@@ -1291,7 +1381,8 @@ void calcularPromedioParcial() {
   }
   archivoCriterios.close();
 
-  // Encontrar el indice del examen en trabajos.txt (asumimos que el ultimo trabajo es el examen)
+  // Encontrar el indice del examen en trabajos.txt (asumimos que el ultimo
+  // trabajo es el examen)
   int indiceExamen = -1;
   ifstream archivoTrabajosIn("trabajos.txt");
   string lineaTrabajos;
@@ -1305,14 +1396,17 @@ void calcularPromedioParcial() {
 
   if (indiceExamen == -1) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-    mostrarTextoAnimado("No se encontro ningun trabajo/examen. Asegurate de haber agregado uno.", 14);
+    mostrarTextoAnimado("No se encontro ningun trabajo/examen. Asegurate de "
+                        "haber agregado uno.",
+                        14);
     esperar(1500);
     animacionSalida("promedios", false, 11);
     return;
   }
 
   cout << "\n";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   mostrarTextoAnimado("Promedios Parciales (Escala 0-10):", 11);
   esperar(300);
 
@@ -1331,8 +1425,10 @@ void calcularPromedioParcial() {
         }
       }
     }
-    float porcentajeAsistencia = (totalFechas > 0) ? (asistenciasPresentes / totalFechas) * 100.0 : 0;
-    float contribucionAsistencia = (porcentajeAsistencia / 100.0) * (pesoAsistencias / 100.0);
+    float porcentajeAsistencia =
+        (totalFechas > 0) ? (asistenciasPresentes / totalFechas) * 100.0 : 0;
+    float contribucionAsistencia =
+        (porcentajeAsistencia / 100.0) * (pesoAsistencias / 100.0);
     promedioParcial += contribucionAsistencia;
 
     // Contribucion trabajos (promedio de calificaciones de trabajos)
@@ -1348,7 +1444,8 @@ void calcularPromedioParcial() {
           } catch (...) {
             calificacionExamen = 0;
           }
-        } else if (static_cast<int>(j) < indiceExamen) { // Considerar solo trabajos ANTES del examen
+        } else if (static_cast<int>(j) <
+                   indiceExamen) { // Considerar solo trabajos ANTES del examen
           try {
             sumaCalificacionesTrabajos += stof(calificaciones[i][j]);
             numTrabajosCalificados++;
@@ -1358,20 +1455,29 @@ void calcularPromedioParcial() {
         }
       }
     }
-    float promedioTrabajos = (numTrabajosCalificados > 0) ? sumaCalificacionesTrabajos / numTrabajosCalificados : 0;
-    float contribucionTrabajos = (promedioTrabajos / 10.0) * (pesoTrabajos / 100.0); // Asumiendo trabajos calificados sobre 10
+    float promedioTrabajos =
+        (numTrabajosCalificados > 0)
+            ? sumaCalificacionesTrabajos / numTrabajosCalificados
+            : 0;
+    float contribucionTrabajos =
+        (promedioTrabajos / 10.0) *
+        (pesoTrabajos / 100.0); // Asumiendo trabajos calificados sobre 10
     promedioParcial += contribucionTrabajos;
 
     // Contribucion examen
-    float contribucionExamen = (calificacionExamen / 10.0) * (pesoExamen / 100.0); // Asumiendo examen calificado sobre 10
+    float contribucionExamen =
+        (calificacionExamen / 10.0) *
+        (pesoExamen / 100.0); // Asumiendo examen calificado sobre 10
     promedioParcial += contribucionExamen;
 
     promedioParcial *= 10.0; // Mostrar en escala 0-10
 
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << nombreAlumno << ": ";
     if (promedioParcial >= 6.0) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              10); // Verde neón
     } else {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
     }
@@ -1380,12 +1486,14 @@ void calcularPromedioParcial() {
   }
 
   cout << "\n";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "==============================================\n";
   cout << "||   ";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
   cout << "Presiona ENTER para continuar...";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "   ||\n";
   cout << "==============================================\n";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
@@ -1446,11 +1554,13 @@ void modificarTrabajos() {
   if (getline(archivoTrabajos, linea)) {
     vector<string> trabajos = split(linea, ',');
     for (const auto &trabajo : trabajos) {
-      if (trabajo.empty()) continue;
+      if (trabajo.empty())
+        continue;
       size_t posFecha = trabajo.find(" (");
       if (posFecha != string::npos) {
         string nombre = trabajo.substr(0, posFecha);
-        string fecha = trabajo.substr(posFecha + 2, trabajo.length() - posFecha - 3);
+        string fecha =
+            trabajo.substr(posFecha + 2, trabajo.length() - posFecha - 3);
         trabajosConFecha.push_back({nombre, fecha});
       } else {
         trabajosConFecha.push_back({trabajo, ""});
@@ -1467,17 +1577,20 @@ void modificarTrabajos() {
   }
 
   // Leer calificaciones (rellenando con '0' si faltan columnas)
-  vector<vector<string>> calificaciones(alumnos.size(), vector<string>(trabajosConFecha.size(), "0"));
+  vector<vector<string>> calificaciones(
+      alumnos.size(), vector<string>(trabajosConFecha.size(), "0"));
   ifstream archivoCalificaciones("calificaciones.txt");
   while (getline(archivoCalificaciones, linea)) {
-    if (linea.empty()) continue;
+    if (linea.empty())
+      continue;
     auto datos = split(linea, ',');
     if (datos.size() >= 1) {
       string nombreAlumno = datos[0];
       auto it = find(alumnos.begin(), alumnos.end(), nombreAlumno);
       if (it != alumnos.end()) {
         size_t indiceAlumno = distance(alumnos.begin(), it);
-        // CORREGIDO: i < trabajosConFecha.size() y datos[i+1] corresponde a columna i
+        // CORREGIDO: i < trabajosConFecha.size() y datos[i+1] corresponde a
+        // columna i
         for (size_t i = 0; i < trabajosConFecha.size(); ++i) {
           if ((i + 1) < datos.size() && !datos[i + 1].empty()) {
             calificaciones[indiceAlumno][i] = datos[i + 1];
@@ -1523,12 +1636,14 @@ void modificarTrabajos() {
 
   // Dibujar encabezado
   cout << string(80, '=') << "\n";
-  cout << "| " << setw(4) << "No." << " | " << setw(40) << "Trabajo" << " | " << setw(10) << "Calificacion" << " |\n";
+  cout << "| " << setw(4) << "No." << " | " << setw(40) << "Trabajo" << " | "
+       << setw(10) << "Calificacion" << " |\n";
   cout << string(80, '=') << "\n";
 
   // Mostrar trabajos y calificaciones
   for (size_t i = 0; i < trabajosConFecha.size(); ++i) {
-    cout << "| " << setw(4) << i + 1 << " | " << setw(40) << trabajosConFecha[i].first;
+    cout << "| " << setw(4) << i + 1 << " | " << setw(40)
+         << trabajosConFecha[i].first;
     if (!trabajosConFecha[i].second.empty()) {
       cout << " (" << trabajosConFecha[i].second << ")";
     }
@@ -1541,7 +1656,8 @@ void modificarTrabajos() {
   do {
     cout << "\nIngrese el numero del trabajo a modificar (o 0 para regresar): ";
     getline(cin, entrada);
-    if (!validarEntradaNumerica(entrada, seleccionTrabajo, 0, trabajosConFecha.size())) {
+    if (!validarEntradaNumerica(entrada, seleccionTrabajo, 0,
+                                trabajosConFecha.size())) {
       mostrarTextoAnimado("Seleccion invalida. Intente de nuevo.", 12);
       continue;
     }
@@ -1567,7 +1683,8 @@ void modificarTrabajos() {
     cout << "\nIngrese la nueva calificacion (0-10): ";
     getline(cin, entrada);
     if (!validarEntradaNumerica(entrada, calificacion, 0, 10)) {
-      mostrarTextoAnimado("Calificacion invalida. Debe ser un numero entre 0 y 10.", 12);
+      mostrarTextoAnimado(
+          "Calificacion invalida. Debe ser un numero entre 0 y 10.", 12);
       continue;
     }
     break;
@@ -1581,7 +1698,8 @@ void modificarTrabajos() {
   // Guardar cambios
   ofstream archivoCalificacionesOut("calificaciones.txt");
   if (!archivoCalificacionesOut.is_open()) {
-    mostrarTextoAnimado("Error al abrir el archivo de calificaciones para escritura.", 12);
+    mostrarTextoAnimado(
+        "Error al abrir el archivo de calificaciones para escritura.", 12);
     esperar(1000);
     return;
   }
@@ -1609,9 +1727,11 @@ void agregarTrabajo() {
 
   string nombreTrabajo;
   do {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "\nIngrese el nombre del trabajo: ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
     getline(cin, nombreTrabajo);
     if (nombreTrabajo.empty()) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
@@ -1623,9 +1743,11 @@ void agregarTrabajo() {
 
   string fecha;
   do {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "\nIngrese la fecha del trabajo (DD/MM/AAAA) o deje en blanco: ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
     getline(cin, fecha);
     if (!fecha.empty() && !validarFormatoFecha(fecha)) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
@@ -1655,7 +1777,8 @@ void agregarTrabajo() {
   archivoTrabajosIn.close();
 
   // Verificar si el trabajo ya existe
-  string trabajoCompleto = fecha.empty() ? nombreTrabajo : nombreTrabajo + " (" + fecha + ")";
+  string trabajoCompleto =
+      fecha.empty() ? nombreTrabajo : nombreTrabajo + " (" + fecha + ")";
   for (const auto &trabajo : trabajos) {
     if (trabajo == trabajoCompleto) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
@@ -1678,7 +1801,8 @@ void agregarTrabajo() {
   ofstream archivoTrabajosOut("trabajos.txt");
   if (!archivoTrabajosOut.is_open()) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
-    mostrarTextoAnimado("Error al abrir el archivo de trabajos para escritura.", 12);
+    mostrarTextoAnimado("Error al abrir el archivo de trabajos para escritura.",
+                        12);
     esperar(1000);
     return;
   }
@@ -1738,21 +1862,26 @@ void gestionarTrabajos() {
   while (true) {
     system("cls");
     // Título con efecto de brillo
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     mostrarTextoAnimado("=== GESTION DE TRABAJOS ===", 13);
-    
+
     // Opciones con colores neón
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     mostrarTextoAnimado("\n1. Agregar trabajo", 11);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
     mostrarTextoAnimado("2. Eliminar trabajo", 12);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
     mostrarTextoAnimado("0. Regresar", 14);
 
     int opcion;
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << "\nOpción: ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
 
     cin >> opcion;
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -1767,10 +1896,12 @@ void gestionarTrabajos() {
     case 0:
       // Animación de salida personalizada
       system("cls");
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              13); // Magenta neón
       mostrarTextoAnimado("Saliendo de Gestion de Trabajos", 13);
       mostrarBarraProgreso(600);
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "\nRegresando al menu principal";
       for (int i = 0; i < 3; ++i) {
         cout << ".";
@@ -1817,12 +1948,15 @@ void eliminarTrabajo() {
   }
 
   // Mostrar lista de trabajos con colores neón
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "\nLista de trabajos:\n";
   for (size_t i = 0; i < trabajos.size(); ++i) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << i + 1 << ". ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
     cout << trabajos[i] << "\n";
   }
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
@@ -1831,9 +1965,11 @@ void eliminarTrabajo() {
   float seleccion;
   string entrada;
   do {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "\nIngrese el numero del trabajo a eliminar (o 0 para cancelar): ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
     getline(cin, entrada);
     if (!validarEntradaNumerica(entrada, seleccion, 0, trabajos.size())) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
@@ -1916,7 +2052,8 @@ void gestionarCriteriosEvaluacion() {
   while (true) {
     system("cls");
     // Título con efecto de brillo
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     mostrarTextoAnimado("=== GESTION DE CRITERIOS DE EVALUACION ===", 13);
     esperar(300);
 
@@ -1924,23 +2061,29 @@ void gestionarCriteriosEvaluacion() {
 
     if (criteriosExisten) {
       mostrarTablaCriterios();
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "Selecciona una opcion:\n";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              14); // Amarillo neón
       cout << "1. Modificar criterios\n";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
       cout << "0. Regresar\n";
     } else {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "Selecciona una opcion:\n";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              14); // Amarillo neón
       cout << "1. Agregar criterios\n";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
       cout << "0. Regresar\n";
     }
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << "\nOpcion: ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            14); // Amarillo neón
 
     int opcion;
     cin >> opcion;
@@ -1954,10 +2097,12 @@ void gestionarCriteriosEvaluacion() {
       case 0:
         // Animación de salida personalizada
         system("cls");
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                13); // Magenta neón
         mostrarTextoAnimado("Saliendo de Gestion de Criterios", 13);
         mostrarBarraProgreso(600);
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                11); // Azul brillante
         cout << "\nRegresando al menu principal";
         for (int i = 0; i < 3; ++i) {
           cout << ".";
@@ -1968,7 +2113,8 @@ void gestionarCriteriosEvaluacion() {
         esperar(500);
         return;
       default:
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                12); // Rojo neón
         mostrarTextoAnimado("Opcion invalida.", 12);
         esperar(1000);
         break;
@@ -1981,10 +2127,12 @@ void gestionarCriteriosEvaluacion() {
       case 0:
         // Animación de salida personalizada
         system("cls");
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                13); // Magenta neón
         mostrarTextoAnimado("Saliendo de Gestion de Criterios", 13);
         mostrarBarraProgreso(600);
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                11); // Azul brillante
         cout << "\nRegresando al menu principal";
         for (int i = 0; i < 3; ++i) {
           cout << ".";
@@ -1995,7 +2143,8 @@ void gestionarCriteriosEvaluacion() {
         esperar(500);
         return;
       default:
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                12); // Rojo neón
         mostrarTextoAnimado("Opcion invalida.", 12);
         esperar(1000);
         break;
@@ -2018,7 +2167,8 @@ void modificarCalificacionAlumno() {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta
     mostrarTextoAnimado("Saliendo de Modificar Calificación...", 13);
     mostrarBarraProgreso(600);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     mostrarTextoAnimado("Regresando al menú principal...", 11);
     esperar(600);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
@@ -2033,7 +2183,8 @@ void modificarCalificacionAlumno() {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta
     mostrarTextoAnimado("Saliendo de Modificar Calificación...", 13);
     mostrarBarraProgreso(600);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     mostrarTextoAnimado("Regresando al menú principal...", 11);
     esperar(600);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
@@ -2054,7 +2205,8 @@ void modificarCalificacionAlumno() {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta
     mostrarTextoAnimado("Saliendo de Modificar Calificación...", 13);
     mostrarBarraProgreso(600);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     mostrarTextoAnimado("Regresando al menú principal...", 11);
     esperar(600);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
@@ -2064,19 +2216,24 @@ void modificarCalificacionAlumno() {
   // Selección de alumno
   while (true) {
     system("cls");
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     mostrarTextoAnimado("=== MODIFICAR CALIFICACIÓN DE ALUMNO ===", 13);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "\nSeleccione el alumno:\n\n";
     for (size_t i = 0; i < alumnos.size(); ++i) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón para el número
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              10); // Verde neón para el número
       cout << i + 1 << ". ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante para el texto
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante para el texto
       cout << alumnos[i] << "\n";
     }
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
     cout << "0. Cancelar y regresar\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "\nOpción: ";
     string entrada;
     float seleccion;
@@ -2091,7 +2248,8 @@ void modificarCalificacionAlumno() {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta
       mostrarTextoAnimado("Saliendo de Modificar Calificación...", 13);
       mostrarBarraProgreso(600);
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       mostrarTextoAnimado("Regresando al menú principal...", 11);
       esperar(600);
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
@@ -2100,8 +2258,10 @@ void modificarCalificacionAlumno() {
     string alumnoSeleccionado = alumnos[static_cast<int>(seleccion) - 1];
     // Animación de transición
     system("cls");
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
-    mostrarTextoAnimado("=== MODIFICAR CALIFICACIÓN DE: [" + alumnoSeleccionado + "] ===", 13);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
+    mostrarTextoAnimado(
+        "=== MODIFICAR CALIFICACIÓN DE: [" + alumnoSeleccionado + "] ===", 13);
     mostrarBarraProgreso(500);
     esperar(300);
 
@@ -2115,7 +2275,8 @@ void modificarCalificacionAlumno() {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta
       mostrarTextoAnimado("Saliendo de Modificar Calificación...", 13);
       mostrarBarraProgreso(600);
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       mostrarTextoAnimado("Regresando al menú principal...", 11);
       esperar(600);
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
@@ -2131,24 +2292,32 @@ void modificarCalificacionAlumno() {
     // Selección de criterio
     while (true) {
       system("cls");
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
-      mostrarTextoAnimado("=== MODIFICAR CALIFICACIÓN DE: [" + alumnoSeleccionado + "] ===", 13);
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              13); // Magenta neón
+      mostrarTextoAnimado("=== MODIFICAR CALIFICACIÓN DE: [" +
+                              alumnoSeleccionado + "] ===",
+                          13);
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "\nSeleccione el criterio a modificar:\n\n";
       for (size_t i = 0; i < criterios.size(); ++i) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón para el número
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                10); // Verde neón para el número
         cout << i + 1 << ". ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante para el texto
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                11); // Azul brillante para el texto
         cout << criterios[i] << "\n";
       }
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
       cout << "0. Cancelar y regresar\n";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "\nOpción: ";
       string entradaCriterio;
       float criterioSeleccionado;
       getline(cin, entradaCriterio);
-      if (!validarEntradaNumerica(entradaCriterio, criterioSeleccionado, 0, criterios.size())) {
+      if (!validarEntradaNumerica(entradaCriterio, criterioSeleccionado, 0,
+                                  criterios.size())) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
         mostrarTextoAnimado("Selección inválida. Intente de nuevo.", 12);
         esperar(700);
@@ -2158,30 +2327,37 @@ void modificarCalificacionAlumno() {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta
         mostrarTextoAnimado("Saliendo de Modificar Calificación...", 13);
         mostrarBarraProgreso(600);
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                11); // Azul brillante
         mostrarTextoAnimado("Regresando al menú principal...", 11);
         esperar(600);
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
         return;
       }
-      string criterioElegido = criterios[static_cast<int>(criterioSeleccionado) - 1];
+      string criterioElegido =
+          criterios[static_cast<int>(criterioSeleccionado) - 1];
       // Animación de transición
       system("cls");
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
-      mostrarTextoAnimado("=== MODIFICAR CALIFICACIÓN DE: [" + alumnoSeleccionado + "] ===", 13);
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              13); // Magenta neón
+      mostrarTextoAnimado("=== MODIFICAR CALIFICACIÓN DE: [" +
+                              alumnoSeleccionado + "] ===",
+                          13);
       mostrarBarraProgreso(500);
       esperar(300);
 
       // Ingreso de calificación
       while (true) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                11); // Azul brillante
         cout << "\nIngrese la nueva calificación (0-10): ";
         string entradaCalif;
         float nuevaCalificacion;
         getline(cin, entradaCalif);
         if (!validarEntradaNumerica(entradaCalif, nuevaCalificacion, 0, 10)) {
           SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
-          mostrarTextoAnimado("Calificación inválida. Debe ser un número entre 0 y 10.", 12);
+          mostrarTextoAnimado(
+              "Calificación inválida. Debe ser un número entre 0 y 10.", 12);
           esperar(700);
           continue;
         }
@@ -2203,9 +2379,11 @@ void modificarCalificacionAlumno() {
         bool encontrado = false;
         for (size_t i = 0; i < calificaciones.size(); ++i) {
           auto datos = split(calificaciones[i], ',');
-          if (datos.size() >= 3 && datos[0] == alumnoSeleccionado && datos[1] == criterioElegido) {
+          if (datos.size() >= 3 && datos[0] == alumnoSeleccionado &&
+              datos[1] == criterioElegido) {
             stringstream ss;
-            ss << alumnoSeleccionado << "," << criterioElegido << "," << nuevaCalificacion;
+            ss << alumnoSeleccionado << "," << criterioElegido << ","
+               << nuevaCalificacion;
             calificaciones[i] = ss.str();
             encontrado = true;
             break;
@@ -2213,18 +2391,23 @@ void modificarCalificacionAlumno() {
         }
         if (!encontrado) {
           stringstream ss;
-          ss << alumnoSeleccionado << "," << criterioElegido << "," << nuevaCalificacion;
+          ss << alumnoSeleccionado << "," << criterioElegido << ","
+             << nuevaCalificacion;
           calificaciones.push_back(ss.str());
         }
         ofstream archivoCalificacionesOut("calificaciones.txt");
         if (!archivoCalificacionesOut.is_open()) {
           SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
-          mostrarTextoAnimado("Error al abrir el archivo de calificaciones para escritura.", 12);
+          mostrarTextoAnimado(
+              "Error al abrir el archivo de calificaciones para escritura.",
+              12);
           esperar(1000);
-          SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta
+          SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                  13); // Magenta
           mostrarTextoAnimado("Saliendo de Modificar Calificación...", 13);
           mostrarBarraProgreso(600);
-          SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+          SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                  11); // Azul brillante
           mostrarTextoAnimado("Regresando al menú principal...", 11);
           esperar(600);
           SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
@@ -2268,17 +2451,20 @@ void mostrarTablaCriterios() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   cout << "\n";
   cout << "+" << string(anchoTabla, '-') << "+\n";
-  cout << "|" << string(espaciosTitulo, ' ') << titulo << string(anchoTabla - espaciosTitulo - titulo.length(), ' ') << "|\n";
+  cout << "|" << string(espaciosTitulo, ' ') << titulo
+       << string(anchoTabla - espaciosTitulo - titulo.length(), ' ') << "|\n";
   cout << "+" << string(anchoTabla, '-') << "+\n";
 
   // Asistencias
   cout << "|  ";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "● Asistencias";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
   cout << string(15 - 11, ' ');
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
-  cout << right << setw(7) << fixed << setprecision(1) << valorAsistencias << "%  |\n";
+  cout << right << setw(7) << fixed << setprecision(1) << valorAsistencias
+       << "%  |\n";
 
   // Trabajos
   cout << "|  ";
@@ -2287,7 +2473,8 @@ void mostrarTablaCriterios() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
   cout << string(15 - 8, ' ');
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-  cout << right << setw(7) << fixed << setprecision(1) << valorTrabajos << "%  |\n";
+  cout << right << setw(7) << fixed << setprecision(1) << valorTrabajos
+       << "%  |\n";
 
   // Examen
   cout << "|  ";
@@ -2296,7 +2483,8 @@ void mostrarTablaCriterios() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
   cout << string(15 - 6, ' ');
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-  cout << right << setw(7) << fixed << setprecision(1) << valorExamen << "%  |\n";
+  cout << right << setw(7) << fixed << setprecision(1) << valorExamen
+       << "%  |\n";
 
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
   cout << "+" << string(anchoTabla, '-') << "+\n\n";
@@ -2370,7 +2558,8 @@ void agregarCriteriosEvaluacion() {
   if (existenCriteriosEvaluacion()) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
     mostrarTextoAnimado("Ya existen criterios de evaluación.", 12);
-    mostrarTextoAnimado("Use la opción de modificar para cambiar los valores.", 12);
+    mostrarTextoAnimado("Use la opción de modificar para cambiar los valores.",
+                        12);
     esperar(2000);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     return;
@@ -2381,9 +2570,11 @@ void agregarCriteriosEvaluacion() {
 
   do {
     system("cls");
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     mostrarTextoAnimado("=== AGREGAR CRITERIOS DE EVALUACION ===", 13);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     mostrarTextoAnimado("\nIngrese los porcentajes (deben sumar 100%):", 11);
 
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
@@ -2448,7 +2639,8 @@ void modificarCriteriosEvaluacion() {
   if (!existenCriteriosEvaluacion()) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
     mostrarTextoAnimado("No hay criterios de evaluacion para modificar.", 12);
-    mostrarTextoAnimado("Use la opcion de agregar para crear nuevos criterios.", 12);
+    mostrarTextoAnimado("Use la opcion de agregar para crear nuevos criterios.",
+                        12);
     esperar(2000);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
     return;
@@ -2475,16 +2667,21 @@ void modificarCriteriosEvaluacion() {
   bool valoresValidos = false;
   do {
     system("cls");
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     mostrarTextoAnimado("=== MODIFICAR CRITERIOS DE EVALUACION ===", 13);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     mostrarTextoAnimado("\nValores actuales:", 11);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-    cout << "Asistencias: " << fixed << setprecision(1) << valorAsistencias << "%\n";
+    cout << "Asistencias: " << fixed << setprecision(1) << valorAsistencias
+         << "%\n";
     cout << "Trabajos: " << fixed << setprecision(1) << valorTrabajos << "%\n";
     cout << "Examen: " << fixed << setprecision(1) << valorExamen << "%\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
-    mostrarTextoAnimado("\nIngrese los nuevos porcentajes (deben sumar 100%):", 11);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
+    mostrarTextoAnimado("\nIngrese los nuevos porcentajes (deben sumar 100%):",
+                        11);
 
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
     cout << "\nPorcentaje para Asistencias (0-100): ";
@@ -2742,25 +2939,27 @@ void animarTexto(const string &texto, int velocidad) {
 
 // --- IMPLEMENTACIÓN DE inicializarArchivos ---
 void inicializarArchivos() {
-    vector<string> archivos = {"alumnos.txt", "fechas.txt", "asistencias.txt", "trabajos.txt", "calificaciones.txt", "criterios.txt"};
-    for (const auto &archivo : archivos) {
-        if (!archivoExiste(archivo)) {
-            ofstream nuevoArchivo(archivo);
-            nuevoArchivo.close();
-        }
+  vector<string> archivos = {"alumnos.txt",        "fechas.txt",
+                             "asistencias.txt",    "trabajos.txt",
+                             "calificaciones.txt", "criterios.txt"};
+  for (const auto &archivo : archivos) {
+    if (!archivoExiste(archivo)) {
+      ofstream nuevoArchivo(archivo);
+      nuevoArchivo.close();
     }
-    // Inicializar criterios.txt si está vacío
-    ifstream archivoCriterios("criterios.txt");
-    if (archivoCriterios.peek() == ifstream::traits_type::eof()) {
-        archivoCriterios.close();
-        ofstream criteriosOut("criterios.txt");
-        if (criteriosOut.is_open()) {
-            criteriosOut << "30,40,30"; // Porcentaje por defecto
-            criteriosOut.close();
-        }
-    } else {
-        archivoCriterios.close();
+  }
+  // Inicializar criterios.txt si está vacío
+  ifstream archivoCriterios("criterios.txt");
+  if (archivoCriterios.peek() == ifstream::traits_type::eof()) {
+    archivoCriterios.close();
+    ofstream criteriosOut("criterios.txt");
+    if (criteriosOut.is_open()) {
+      criteriosOut << "30,40,30"; // Porcentaje por defecto
+      criteriosOut.close();
     }
+  } else {
+    archivoCriterios.close();
+  }
 }
 
 // --- IMPLEMENTACIÓN DE registrarTrabajos ---
@@ -2807,11 +3006,13 @@ void registrarTrabajos() {
   if (getline(archivoTrabajos, lineaTrabajos)) {
     vector<string> trabajos = split(lineaTrabajos, ',');
     for (const auto &trabajo : trabajos) {
-      if (trabajo.empty()) continue;
+      if (trabajo.empty())
+        continue;
       size_t posFecha = trabajo.find(" (");
       if (posFecha != string::npos) {
         string nombre = trabajo.substr(0, posFecha);
-        string fecha = trabajo.substr(posFecha + 2, trabajo.length() - posFecha - 3);
+        string fecha =
+            trabajo.substr(posFecha + 2, trabajo.length() - posFecha - 3);
         trabajosConFecha.push_back({nombre, fecha});
       } else {
         trabajosConFecha.push_back({trabajo, ""});
@@ -2831,9 +3032,11 @@ void registrarTrabajos() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9); // Azul neón
   cout << "\nSeleccione el trabajo:\n\n";
   for (size_t i = 0; i < trabajosConFecha.size(); ++i) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << i + 1 << ". ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << trabajosConFecha[i].first;
     if (!trabajosConFecha[i].second.empty()) {
       cout << " (" << trabajosConFecha[i].second << ")";
@@ -2844,11 +3047,14 @@ void registrarTrabajos() {
   float seleccionTrabajo;
   string entrada;
   do {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << "\nIngrese el numero del trabajo (o 0 para regresar): ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     getline(cin, entrada);
-    if (!validarEntradaNumerica(entrada, seleccionTrabajo, 0, trabajosConFecha.size())) {
+    if (!validarEntradaNumerica(entrada, seleccionTrabajo, 0,
+                                trabajosConFecha.size())) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
       mostrarTextoAnimado("Seleccion invalida. Intente de nuevo.", 12);
       continue;
@@ -2863,7 +3069,10 @@ void registrarTrabajos() {
 
   // Animación al seleccionar trabajo
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
-  mostrarTextoAnimado("Trabajo seleccionado: " + trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].first, 10);
+  mostrarTextoAnimado(
+      "Trabajo seleccionado: " +
+          trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].first,
+      10);
   esperar(500);
 
   // Borrar la lista de trabajos
@@ -2871,9 +3080,13 @@ void registrarTrabajos() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   mostrarTextoAnimado("=== REGISTRO DE TRABAJOS ===", 13);
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
-  cout << "\nTrabajo seleccionado: " << trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].first;
-  if (!trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].second.empty()) {
-    cout << " (" << trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].second << ")";
+  cout << "\nTrabajo seleccionado: "
+       << trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].first;
+  if (!trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1]
+           .second.empty()) {
+    cout << " ("
+         << trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].second
+         << ")";
   }
   cout << "\n";
 
@@ -2881,17 +3094,21 @@ void registrarTrabajos() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 9); // Azul neón
   cout << "\nSeleccione el alumno:\n\n";
   for (size_t i = 0; i < alumnos.size(); ++i) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << i + 1 << ". ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << alumnos[i] << "\n";
   }
 
   float seleccionAlumno;
   do {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            13); // Magenta neón
     cout << "\nIngrese el numero del alumno (o 0 para regresar): ";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     getline(cin, entrada);
     if (!validarEntradaNumerica(entrada, seleccionAlumno, 0, alumnos.size())) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
@@ -2908,7 +3125,9 @@ void registrarTrabajos() {
 
   // Animación al seleccionar alumno
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
-  mostrarTextoAnimado("Alumno seleccionado: " + alumnos[static_cast<int>(seleccionAlumno) - 1], 10);
+  mostrarTextoAnimado("Alumno seleccionado: " +
+                          alumnos[static_cast<int>(seleccionAlumno) - 1],
+                      10);
   esperar(500);
 
   // Borrar la lista de alumnos
@@ -2916,24 +3135,31 @@ void registrarTrabajos() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   mostrarTextoAnimado("=== REGISTRO DE TRABAJOS ===", 13);
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
-  cout << "\nTrabajo seleccionado: " << trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].first;
-  if (!trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].second.empty()) {
-    cout << " (" << trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].second << ")";
+  cout << "\nTrabajo seleccionado: "
+       << trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].first;
+  if (!trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1]
+           .second.empty()) {
+    cout << " ("
+         << trabajosConFecha[static_cast<int>(seleccionTrabajo) - 1].second
+         << ")";
   }
   cout << "\n";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
-  cout << "Alumno seleccionado: " << alumnos[static_cast<int>(seleccionAlumno) - 1] << "\n";
+  cout << "Alumno seleccionado: "
+       << alumnos[static_cast<int>(seleccionAlumno) - 1] << "\n";
 
   // Ingresar calificación
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Magenta neón
   cout << "\nIngrese la calificacion (0-10): ";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   float calificacion;
   do {
     getline(cin, entrada);
     if (!validarEntradaNumerica(entrada, calificacion, 0, 10)) {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-      mostrarTextoAnimado("Calificacion invalida. Debe ser un numero entre 0 y 10.", 12);
+      mostrarTextoAnimado(
+          "Calificacion invalida. Debe ser un numero entre 0 y 10.", 12);
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13);
       cout << "Ingrese la calificacion (0-10): ";
       continue;
@@ -2948,9 +3174,11 @@ void registrarTrabajos() {
 
   // Guardar calificación
   ifstream archivoCalificaciones("calificaciones.txt");
-  vector<vector<string>> calificaciones(alumnos.size(), vector<string>(trabajosConFecha.size(), "0"));
+  vector<vector<string>> calificaciones(
+      alumnos.size(), vector<string>(trabajosConFecha.size(), "0"));
   while (getline(archivoCalificaciones, linea)) {
-    if (linea.empty()) continue;
+    if (linea.empty())
+      continue;
     auto datos = split(linea, ',');
     if (datos.size() >= 1) {
       string nombreAlumno = datos[0];
@@ -2976,7 +3204,8 @@ void registrarTrabajos() {
   ofstream archivoCalificacionesOut("calificaciones.txt");
   if (!archivoCalificacionesOut.is_open()) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-    mostrarTextoAnimado("Error al abrir el archivo de calificaciones para escritura.", 12);
+    mostrarTextoAnimado(
+        "Error al abrir el archivo de calificaciones para escritura.", 12);
     esperar(1000);
     animacionSalida("trabajos", false, 13);
     return;
@@ -3005,7 +3234,8 @@ void registrarTrabajos() {
     esperar(200);
   }
   cout << "\n";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   mostrarTextoAnimado("Regresando al menú principal...", 11);
   esperar(500);
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
@@ -3013,7 +3243,8 @@ void registrarTrabajos() {
 
 void modificarAsistenciaDeUnAlumno() {
   system("cls");
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   mostrarTextoAnimado("=== MODIFICAR ASISTENCIA DE UN ALUMNO ===", 11);
   mostrarBarraProgreso(700);
   esperar(300);
@@ -3071,19 +3302,24 @@ void modificarAsistenciaDeUnAlumno() {
   // Selección de alumno
   while (true) {
     system("cls");
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     mostrarTextoAnimado("=== MODIFICAR ASISTENCIA DE UN ALUMNO ===", 11);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "\nSeleccione el alumno:\n\n";
     for (size_t i = 0; i < alumnos.size(); ++i) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón para el número
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              10); // Verde neón para el número
       cout << i + 1 << ". ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante para el texto
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante para el texto
       cout << alumnos[i] << "\n";
     }
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
     cout << "0. Cancelar y regresar\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "\nOpción: ";
     string entrada;
     float seleccion;
@@ -3101,32 +3337,41 @@ void modificarAsistenciaDeUnAlumno() {
     string alumnoSeleccionado = alumnos[static_cast<int>(seleccion) - 1];
     // Animación de transición
     system("cls");
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
-    mostrarTextoAnimado("=== MODIFICAR ASISTENCIA DE: [" + alumnoSeleccionado + "] ===", 11);
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
+    mostrarTextoAnimado(
+        "=== MODIFICAR ASISTENCIA DE: [" + alumnoSeleccionado + "] ===", 11);
     mostrarBarraProgreso(500);
     esperar(300);
 
     // Selección de fecha
     while (true) {
       system("cls");
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
-      mostrarTextoAnimado("=== MODIFICAR ASISTENCIA DE: [" + alumnoSeleccionado + "] ===", 11);
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
+      mostrarTextoAnimado(
+          "=== MODIFICAR ASISTENCIA DE: [" + alumnoSeleccionado + "] ===", 11);
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "\nSeleccione la fecha:\n\n";
       for (size_t i = 0; i < fechas.size(); ++i) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón para el número
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                10); // Verde neón para el número
         cout << i + 1 << ". ";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante para el texto
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                11); // Azul brillante para el texto
         cout << fechas[i] << "\n";
       }
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
       cout << "0. Cancelar y regresar\n";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "\nOpción: ";
       string entradaFecha;
       float seleccionFecha;
       getline(cin, entradaFecha);
-      if (!validarEntradaNumerica(entradaFecha, seleccionFecha, 0, fechas.size())) {
+      if (!validarEntradaNumerica(entradaFecha, seleccionFecha, 0,
+                                  fechas.size())) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
         mostrarTextoAnimado("Selección inválida. Intente de nuevo.", 12);
         esperar(700);
@@ -3139,8 +3384,10 @@ void modificarAsistenciaDeUnAlumno() {
       string fechaSeleccionada = fechas[static_cast<int>(seleccionFecha) - 1];
       // Animación de transición
       system("cls");
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
-      mostrarTextoAnimado("=== MODIFICAR ASISTENCIA DE: [" + alumnoSeleccionado + "] ===", 11);
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
+      mostrarTextoAnimado(
+          "=== MODIFICAR ASISTENCIA DE: [" + alumnoSeleccionado + "] ===", 11);
       mostrarBarraProgreso(500);
       esperar(300);
 
@@ -3166,15 +3413,19 @@ void modificarAsistenciaDeUnAlumno() {
       size_t idxAlumno = static_cast<size_t>(seleccion) - 1;
       size_t idxFecha = static_cast<size_t>(seleccionFecha) - 1;
 
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "\nAlumno: " << alumnoSeleccionado << "\n";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              11); // Azul brillante
       cout << "Fecha: " << fechaSeleccionada << "\n";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
 
       cout << "Asistencia actual: ";
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
-      cout << (asistencias[idxAlumno][idxFecha] == "1" ? "Presente" : "Ausente") << "\n";
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              10); // Verde neón
+      cout << (asistencias[idxAlumno][idxFecha] == "1" ? "Presente" : "Ausente")
+           << "\n";
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
 
       cout << "\nIngrese la nueva asistencia (1 = Presente, 0 = Ausente): ";
@@ -3182,15 +3433,18 @@ void modificarAsistenciaDeUnAlumno() {
       string entradaAsistencia;
       getline(cin, entradaAsistencia);
       if (!validarEntradaNumerica(entradaAsistencia, nuevaAsistencia, 0, 1)) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo neón
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                12); // Rojo neón
         mostrarTextoAnimado("Valor invalido. Debe ser 0 o 1.", 12);
         esperar(700);
         continue;
       }
-      asistencias[idxAlumno][idxFecha] = to_string(static_cast<int>(nuevaAsistencia));
+      asistencias[idxAlumno][idxFecha] =
+          to_string(static_cast<int>(nuevaAsistencia));
 
       // Animación de guardado
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              10); // Verde neón
       mostrarTextoAnimado("Guardando asistencia...", 10);
       mostrarBarraProgreso(900);
       esperar(300);
@@ -3198,7 +3452,8 @@ void modificarAsistenciaDeUnAlumno() {
       ofstream archivoAsistenciasOut("asistencias.txt");
       if (!archivoAsistenciasOut.is_open()) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-        mostrarTextoAnimado("Error al abrir el archivo de asistencias para escritura.", 12);
+        mostrarTextoAnimado(
+            "Error al abrir el archivo de asistencias para escritura.", 12);
         esperar(1000);
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11);
         animacionSalida("asistencias", false, 11);
@@ -3215,7 +3470,8 @@ void modificarAsistenciaDeUnAlumno() {
       }
       archivoAsistenciasOut.close();
 
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              10); // Verde neón
       mostrarTextoAnimado("¡Asistencia actualizada correctamente!", 10);
       mostrarBarraProgreso(700);
       esperar(700);
@@ -3261,7 +3517,9 @@ void calcularPromedioFinal() {
   }
   if (!archivoCriterios.is_open()) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-    mostrarTextoAnimado("Error al abrir el archivo de criterios de evaluacion. Asegurate de haberlos configurado.", 14);
+    mostrarTextoAnimado("Error al abrir el archivo de criterios de evaluacion. "
+                        "Asegurate de haberlos configurado.",
+                        14);
     esperar(1500);
     animacionSalida("promedios", false, 11);
     return;
@@ -3300,7 +3558,8 @@ void calcularPromedioFinal() {
         pesoExamen = stof(criterios[2]);
       } catch (...) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-        mostrarTextoAnimado("Error al leer los pesos de los criterios de evaluacion.", 12);
+        mostrarTextoAnimado(
+            "Error al leer los pesos de los criterios de evaluacion.", 12);
         esperar(1000);
         animacionSalida("promedios", false, 11);
         return;
@@ -3315,7 +3574,8 @@ void calcularPromedioFinal() {
   }
   archivoCriterios.close();
 
-  // Encontrar el indice del examen en trabajos.txt (asumimos que el ultimo trabajo es el examen)
+  // Encontrar el indice del examen en trabajos.txt (asumimos que el ultimo
+  // trabajo es el examen)
   int indiceExamen = -1;
   ifstream archivoTrabajosIn("trabajos.txt");
   string lineaTrabajos;
@@ -3329,14 +3589,17 @@ void calcularPromedioFinal() {
 
   if (indiceExamen == -1) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);
-    mostrarTextoAnimado("No se encontro ningun trabajo/examen. Asegurate de haber agregado uno.", 14);
+    mostrarTextoAnimado("No se encontro ningun trabajo/examen. Asegurate de "
+                        "haber agregado uno.",
+                        14);
     esperar(1500);
     animacionSalida("promedios", false, 11);
     return;
   }
 
   cout << "\n";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   mostrarTextoAnimado("Promedios Finales (Escala 0-10):", 11);
   esperar(300);
 
@@ -3355,8 +3618,10 @@ void calcularPromedioFinal() {
         }
       }
     }
-    float porcentajeAsistencia = (totalFechas > 0) ? (asistenciasPresentes / totalFechas) * 100.0 : 0;
-    float contribucionAsistencia = (porcentajeAsistencia / 100.0) * (pesoAsistencias / 100.0);
+    float porcentajeAsistencia =
+        (totalFechas > 0) ? (asistenciasPresentes / totalFechas) * 100.0 : 0;
+    float contribucionAsistencia =
+        (porcentajeAsistencia / 100.0) * (pesoAsistencias / 100.0);
     promedioFinal += contribucionAsistencia;
 
     // Contribucion trabajos (promedio de calificaciones de trabajos)
@@ -3372,7 +3637,8 @@ void calcularPromedioFinal() {
           } catch (...) {
             calificacionExamen = 0;
           }
-        } else if (static_cast<int>(j) < indiceExamen) { // Considerar solo trabajos ANTES del examen
+        } else if (static_cast<int>(j) <
+                   indiceExamen) { // Considerar solo trabajos ANTES del examen
           try {
             sumaCalificacionesTrabajos += stof(calificaciones[i][j]);
             numTrabajosCalificados++;
@@ -3382,20 +3648,29 @@ void calcularPromedioFinal() {
         }
       }
     }
-    float promedioTrabajos = (numTrabajosCalificados > 0) ? sumaCalificacionesTrabajos / numTrabajosCalificados : 0;
-    float contribucionTrabajos = (promedioTrabajos / 10.0) * (pesoTrabajos / 100.0); // Asumiendo trabajos calificados sobre 10
+    float promedioTrabajos =
+        (numTrabajosCalificados > 0)
+            ? sumaCalificacionesTrabajos / numTrabajosCalificados
+            : 0;
+    float contribucionTrabajos =
+        (promedioTrabajos / 10.0) *
+        (pesoTrabajos / 100.0); // Asumiendo trabajos calificados sobre 10
     promedioFinal += contribucionTrabajos;
 
     // Contribucion examen
-    float contribucionExamen = (calificacionExamen / 10.0) * (pesoExamen / 100.0); // Asumiendo examen calificado sobre 10
+    float contribucionExamen =
+        (calificacionExamen / 10.0) *
+        (pesoExamen / 100.0); // Asumiendo examen calificado sobre 10
     promedioFinal += contribucionExamen;
 
     promedioFinal *= 10.0; // Mostrar en escala 0-10
 
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << nombreAlumno << ": ";
     if (promedioFinal >= 6.0) {
-      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
+      SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                              10); // Verde neón
     } else {
       SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12); // Rojo
     }
@@ -3404,12 +3679,14 @@ void calcularPromedioFinal() {
   }
 
   cout << "\n";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "==============================================\n";
   cout << "||   ";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10); // Verde neón
   cout << "Presiona ENTER para continuar...";
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          11); // Azul brillante
   cout << "   ||\n";
   cout << "==============================================\n";
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15); // Blanco
@@ -3420,7 +3697,7 @@ void calcularPromedioFinal() {
 }
 
 // Declaración de la función centrarTexto
-string centrarTexto(const string& texto) {
+string centrarTexto(const string &texto) {
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
   int ancho = csbi.srWindow.Right - csbi.srWindow.Left + 1;
@@ -3434,11 +3711,13 @@ int main() {
   int opcion;
   do {
     system("cls");
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << centrarTexto("Docente");
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 13); // Rosa neón
     cout << "Z";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 11); // Azul brillante
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                            11); // Azul brillante
     cout << "\n\n";
     mostrarMenu();
     cout << "\nSelecciona una opcion: ";
@@ -3492,31 +3771,33 @@ int main() {
   return 0;
 }
 
-void animacionSalida(const std::string& nombreSeccion, bool esSalidaSistema, int color) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color); // Color personalizado
-    cout << "\n\n"; // Salto de línea antes del texto
-    for (char c : ("Saliendo de " + nombreSeccion + "...")) {
-        cout << c;
-        cout.flush();
-        esperar(30);
-    }
-    cout << "\n"; // Salto de línea antes de los puntos
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
-    for (int i = 0; i < 3; ++i) {
-        cout << ".";
-        cout.flush();
-        esperar(350);
+void animacionSalida(const std::string &nombreSeccion, bool esSalidaSistema,
+                     int color) {
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                          color); // Color personalizado
+  cout << "\n\n";                 // Salto de línea antes del texto
+  for (char c : ("Saliendo de " + nombreSeccion + "...")) {
+    cout << c;
+    cout.flush();
+    esperar(30);
+  }
+  cout << "\n"; // Salto de línea antes de los puntos
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14); // Amarillo neón
+  for (int i = 0; i < 3; ++i) {
+    cout << ".";
+    cout.flush();
+    esperar(350);
+  }
+  cout << "\n";
+  if (!esSalidaSistema) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+    for (char c : std::string("Regresando al menú principal.")) {
+      cout << c;
+      cout.flush();
+      esperar(30);
     }
     cout << "\n";
-    if (!esSalidaSistema) {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
-        for (char c : std::string("Regresando al menú principal.")) {
-            cout << c;
-            cout.flush();
-            esperar(30);
-        }
-        cout << "\n";
-    }
-    esperar(600);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+  }
+  esperar(600);
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
 }
